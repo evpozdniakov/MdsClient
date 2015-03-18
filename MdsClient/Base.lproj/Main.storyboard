@@ -41,24 +41,27 @@
                         <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <tableView clipsSubviews="YES" contentMode="scaleToFill" misplaced="YES" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" translatesAutoresizingMaskIntoConstraints="NO" id="i3H-jk-CqN">
+                            <tableView clipsSubviews="YES" contentMode="scaleToFill" fixedFrame="YES" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" translatesAutoresizingMaskIntoConstraints="NO" id="i3H-jk-CqN">
                                 <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <connections>
+                                    <outlet property="dataSource" destination="BYZ-38-t0r" id="Lev-Bw-fNb"/>
+                                    <outlet property="delegate" destination="BYZ-38-t0r" id="LTY-Ss-9On"/>
+                                </connections>
                             </tableView>
-                            <searchBar contentMode="redraw" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Z5N-2Z-8SI">
-                                <rect key="frame" x="0.0" y="20" width="600" height="44"/>
+                            <searchBar contentMode="redraw" translatesAutoresizingMaskIntoConstraints="NO" id="Z5N-2Z-8SI">
+                                <rect key="frame" x="0.0" y="64" width="600" height="44"/>
                                 <textInputTraits key="textInputTraits"/>
+                                <connections>
+                                    <outlet property="delegate" destination="BYZ-38-t0r" id="Ioy-Y8-sw6"/>
+                                </connections>
                             </searchBar>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                         <constraints>
-                            <constraint firstAttribute="trailing" secondItem="Z5N-2Z-8SI" secondAttribute="trailing" id="3I9-qf-Bfr"/>
-                            <constraint firstItem="wfy-db-euE" firstAttribute="top" secondItem="i3H-jk-CqN" secondAttribute="bottom" id="9ZE-CQ-RaG"/>
-                            <constraint firstItem="Z5N-2Z-8SI" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="Uua-tW-DL9"/>
-                            <constraint firstAttribute="trailing" secondItem="i3H-jk-CqN" secondAttribute="trailing" id="XaY-wK-J2e"/>
-                            <constraint firstItem="Z5N-2Z-8SI" firstAttribute="top" secondItem="y3c-jy-aDJ" secondAttribute="bottom" id="pCY-kS-QB1"/>
-                            <constraint firstItem="i3H-jk-CqN" firstAttribute="top" secondItem="8bC-Xf-vdC" secondAttribute="top" id="qvo-fr-k1I"/>
-                            <constraint firstItem="i3H-jk-CqN" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="spb-fz-Bs9"/>
+                            <constraint firstItem="Z5N-2Z-8SI" firstAttribute="top" secondItem="y3c-jy-aDJ" secondAttribute="bottom" id="9Mk-5i-xtq"/>
+                            <constraint firstItem="Z5N-2Z-8SI" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="EUB-NV-Oqp"/>
+                            <constraint firstAttribute="trailing" secondItem="Z5N-2Z-8SI" secondAttribute="trailing" id="ttE-sk-mjm"/>
                         </constraints>
                     </view>
                     <navigationItem key="navigationItem" title="Catalog" id="UHd-nx-wnA">
@@ -292,6 +295,6 @@
         <image name="Most viewed" width="16" height="16"/>
     </resources>
     <inferredMetricsTieBreakers>
-        <segue reference="72c-x9-Q4I"/>
+        <segue reference="jN9-C0-igq"/>
     </inferredMetricsTieBreakers>
 </document>
