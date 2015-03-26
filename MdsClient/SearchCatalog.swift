@@ -43,6 +43,83 @@ class SearchCatalog: UIViewController {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
     }*/
+
+    // #MARK: - helpers
+
+    func pareseJsonData(data: NSData) -> [AnyObject]? {
+        var error: NSError?
+        
+        if let json = NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions(0), error: &error) as? [AnyObject] {
+            return json
+        }
+        
+        if let error = error {
+            // #FIXME: error case
+            println("error: \(error)")
+            return nil
+        }
+
+        // #FIXME: error case
+        println("some error: may be unexpected json structure")
+
+        return nil
+    }
+
+    func getCatalogSearchUrlWithText(text: String) -> NSURL? {
+        let escapedText = text.stringByAddingPercentEscapesUsingEncoding(NSUTF8StringEncoding)!
+        let urlString = String(format: "http://bumagi.net/api/mds-catalog.php?q=%@", escapedText)        
+        let url = NSURL(string: urlString)
+
+        return url
+    }
+
+    func getCatalogSearchDataTaskWithUrl(url: NSURL) -> NSURLSessionDataTask {
+        let session = NSURLSession.sharedSession()
+        let dataTask = session.dataTaskWithURL(url, completionHandler: {data, response, error in
+            if let error = error {
+                // #FIXME: error case
+                println("error in dataTask: \(error)")
+                return
+            }
+
+            let httpResponse = response as NSHTTPURLResponse?
+
+            if httpResponse == nil || httpResponse!.statusCode != 200 {
+                // #FIXME: error case
+                println("unexpected server response")
+                return
+            }
+
+            // #FIXME: dont we need weak here?
+            if let json = self.pareseJsonData(data) {
+                self.applyDataFromJson(json)
+            }
+
+            dispatch_async(dispatch_get_main_queue()) {
+                self.tableView.reloadData()
+            }
+        })
+
+        return dataTask
+    }
+
+    func applyDataFromJson(json: [AnyObject]) {
+        searchResults = [Record]()
+
+        for entry in json {
+            if let entry = entry as? [String: AnyObject] {
+                println("entry is \(entry)")
+
+                let title = entry["title"] as String?
+                let author = entry["author"] as String?
+                // let size = entry["size"] as String?
+
+                if title != nil && author != nil {
+                    searchResults.append(Record(author: author!, title: title!))
+                }
+            }
+        }
+    }
 }
 
 // #MARK: - UITableViewDataSource
@@ -94,25 +171,25 @@ extension SearchCatalog: UITableViewDelegate {
 extension SearchCatalog: UISearchBarDelegate {
     func searchBarSearchButtonClicked(searchBar: UISearchBar) {
         println("search button clicked, search string: '\(searchBar.text)'")
+        
+        if searchBar.text.isEmpty {
+            return
+        }
 
         searchBar.resignFirstResponder()
+        
+        let url = getCatalogSearchUrlWithText(searchBar.text)
+
+        if url == nil {
+            println("getCatalogSearchUrlWithText hasn't return proper URL")
+            return
+        }
 
         lastSearchQuery = searchBar.text
-        let searchString: NSString = lastSearchQuery
-        let firstCharacter = searchString.substringToIndex(1)
-        let number = firstCharacter.toInt()
 
-        searchResults = [Record]()
-        if number > 0 {
-            for var i = 0; i < number; i++ {
-                let record = Record(author: "Кир Булычев", title: "Название произведения несколько слов \(i)")
-                searchResults.append(record)
-            }
-        }
-        
-        tableView.reloadData()
-        
-        println("search results are: \(searchResults)")
+        let dataTask = getCatalogSearchDataTaskWithUrl(url!)
+
+        dataTask.resume()
     }
 }
 
