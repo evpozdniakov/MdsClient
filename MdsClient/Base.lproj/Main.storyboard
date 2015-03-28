@@ -83,8 +83,11 @@
                                     <outlet property="delegate" destination="BYZ-38-t0r" id="LTY-Ss-9On"/>
                                 </connections>
                             </tableView>
-                            <searchBar contentMode="redraw" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="Z5N-2Z-8SI">
+                            <searchBar contentMode="redraw" translatesAutoresizingMaskIntoConstraints="NO" id="Z5N-2Z-8SI">
                                 <rect key="frame" x="0.0" y="64" width="600" height="44"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="44" id="c7S-5x-LRs"/>
+                                </constraints>
                                 <textInputTraits key="textInputTraits"/>
                                 <connections>
                                     <outlet property="delegate" destination="BYZ-38-t0r" id="Ioy-Y8-sw6"/>
@@ -93,10 +96,13 @@
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                         <constraints>
+                            <constraint firstAttribute="trailing" secondItem="Z5N-2Z-8SI" secondAttribute="trailing" id="SAG-Pn-bT1"/>
                             <constraint firstAttribute="trailing" secondItem="i3H-jk-CqN" secondAttribute="trailing" id="WOJ-cb-Bz7"/>
                             <constraint firstItem="i3H-jk-CqN" firstAttribute="top" secondItem="8bC-Xf-vdC" secondAttribute="top" id="buF-OZ-jPa"/>
+                            <constraint firstItem="Z5N-2Z-8SI" firstAttribute="top" secondItem="y3c-jy-aDJ" secondAttribute="bottom" id="dji-bV-VDN"/>
                             <constraint firstAttribute="bottom" secondItem="i3H-jk-CqN" secondAttribute="bottom" id="k85-SP-d9e"/>
                             <constraint firstItem="i3H-jk-CqN" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="oTK-fN-RKc"/>
+                            <constraint firstItem="Z5N-2Z-8SI" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="sbe-uO-RY7"/>
                         </constraints>
                     </view>
                     <navigationItem key="navigationItem" title="Catalog" id="UHd-nx-wnA">
