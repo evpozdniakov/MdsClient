@@ -27,6 +27,7 @@ class SearchCatalog: UIViewController {
     var searchQueryHasNoResults: Bool {
         return !lastSearchQuery.isEmpty && searchResults.isEmpty
     }
+    var catalogSearchInProcess = false
     
     
     // #MARK: - UIViewController methods
@@ -54,20 +55,24 @@ class SearchCatalog: UIViewController {
         }
         
         if let error = error {
-            // #FIXME: error case
-            println("error: \(error)")
-            return nil
+            // Cocoa error 3840: JSON text did not start with array or object and option to allow fragments not set
+            println("error-1004: \(error)")
+        }
+        else {
+            // Error: JSON could be parsed, but it can be casted to [AnyObject] format
+            // println("some error: may be unexpected json structure")
+            println("error-1005")
         }
 
-        // #FIXME: error case
-        println("some error: may be unexpected json structure")
-
+        throwErrorMessage("Сервер вернул данные, которые невозможно прочитать. Попробуйте повторить запрос позже.",
+            withHandler: nil,
+            inViewController: self)
         return nil
     }
 
     func getCatalogSearchUrlWithText(text: String) -> NSURL? {
         let escapedText = text.stringByAddingPercentEscapesUsingEncoding(NSUTF8StringEncoding)!
-        let urlString = String(format: "http://bumagi.net/api/mds-catalog.php?q=%@", escapedText)        
+        let urlString = String(format: "http://bumagi222.net/api/mds-catalog.php?q=%@", escapedText)        
         let url = NSURL(string: urlString)
 
         return url
@@ -76,28 +81,42 @@ class SearchCatalog: UIViewController {
     func getCatalogSearchDataTaskWithUrl(url: NSURL) -> NSURLSessionDataTask {
         let session = NSURLSession.sharedSession()
         let dataTask = session.dataTaskWithURL(url, completionHandler: {data, response, error in
+            self.catalogSearchInProcess = false
+
+            func reloadTableInMainThread() {
+                dispatch_async(dispatch_get_main_queue()) {
+                    self.tableView.reloadData()
+                }
+            }
+
             if let error = error {
-                // #FIXME: error case
-                println("error in dataTask: \(error)")
+                // The operation couldn’t be completed. (kCFErrorDomainCFNetwork error -1003.)
+                // It happens when URL is unreachable
+                println("error-1001: \(error)")
+                throwErrorMessage("Сервер не найден. Возможно это связано с конфигурацией вашей сети. Попробуйте повторить запрос позже.",
+                    withHandler: reloadTableInMainThread,
+                    inViewController: self)
                 return
             }
 
             let httpResponse = response as NSHTTPURLResponse?
 
-            if httpResponse == nil || httpResponse!.statusCode != 200 {
-                // #FIXME: error case
-                println("unexpected server response")
-                return
+            if httpResponse == nil || httpResponse!.statusCode == 500 {
+                // Server didn't return any response
+                println("error-1002")
+                throwErrorMessage("Сервер не отвечает. Возможно он перегружен. Попробуйте повторить запрос позже.",
+                    withHandler: reloadTableInMainThread,
+                    inViewController: self)
+            }
+            else if httpResponse!.statusCode != 200 {
+                // erver response code != 200
+                println("error-1003")
+                throwErrorMessage("Сервер вернул код \(httpResponse!.statusCode). Попробуйте повторить запрос позже.",
+                    withHandler: reloadTableInMainThread,
+                    inViewController: self)
             }
 
-            // #FIXME: dont we need weak here?
-            if let json = self.pareseJsonData(data) {
-                self.applyDataFromJson(json)
-            }
-
-            dispatch_async(dispatch_get_main_queue()) {
-                self.tableView.reloadData()
-            }
+            reloadTableInMainThread()            
         })
 
         return dataTask
@@ -108,7 +127,7 @@ class SearchCatalog: UIViewController {
 
         for entry in json {
             if let entry = entry as? [String: AnyObject] {
-                println("entry is \(entry)")
+                // println("entry is \(entry)")
 
                 let title = entry["title"] as String?
                 let author = entry["author"] as String?
@@ -126,10 +145,22 @@ class SearchCatalog: UIViewController {
 
 extension SearchCatalog: UITableViewDataSource {
     func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return searchQueryHasNoResults ? 1 : searchResults.count
+        if catalogSearchInProcess {
+            return 1
+        }
+
+        if searchQueryHasNoResults {
+            return 1
+        }
+
+        return searchResults.count
     }
-    
+
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+        if catalogSearchInProcess {
+            return getSearchInProcessCellForTableView(tableView)
+        }
+
         let cellId = searchQueryHasNoResults ? CellId.nothingFound : CellId.searchResult
         var cell = tableView.dequeueReusableCellWithIdentifier(cellId) as UITableViewCell!
         
@@ -145,6 +176,26 @@ extension SearchCatalog: UITableViewDataSource {
 
             cell.textLabel!.text = record.title
             cell.detailTextLabel!.text = record.author
+        }
+        
+        return cell
+    }
+    
+    func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
+        let height: CGFloat = catalogSearchInProcess ? 88 : 44
+
+        return height
+    }
+
+    func getSearchInProcessCellForTableView(tableView: UITableView) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCellWithIdentifier("SearchInProcessCell") as UITableViewCell
+        
+        if let textLbl = cell.viewWithTag(100) as? UILabel {
+            textLbl.text = "Ищем «\(lastSearchQuery)»"
+        }
+
+        if let spinner = cell.viewWithTag(200) as? UIActivityIndicatorView {
+            spinner.startAnimating()
         }
         
         return cell
@@ -188,6 +239,8 @@ extension SearchCatalog: UISearchBarDelegate {
         lastSearchQuery = searchBar.text
 
         let dataTask = getCatalogSearchDataTaskWithUrl(url!)
+        catalogSearchInProcess = true
+        tableView.reloadData()
 
         dataTask.resume()
     }
