@@ -230,8 +230,12 @@ extension SearchCatalog: UITableViewDataSource {
             authorLbl.text = record.author
         }
 
-        if let titleLbl = cell.viewWithTag(200) as? UILabel {
-            titleLbl.text = record.title
+//        if let titleLbl = cell.viewWithTag(200) as? UILabel {
+//            titleLbl.text = record.title
+//        }
+
+        if let titleTxt = cell.viewWithTag(200) as? UITextView {
+            titleTxt.text = record.title
         }
         
         return cell
