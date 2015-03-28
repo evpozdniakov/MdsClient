@@ -79,11 +79,51 @@
                                             </constraints>
                                         </tableViewCellContentView>
                                     </tableViewCell>
-                                    <tableViewCell contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="88" id="b0w-EN-fmi">
+                                    <tableViewCell contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" reuseIdentifier="RecordCell" rowHeight="88" id="b0w-EN-fmi">
                                         <rect key="frame" x="0.0" y="0.0" width="600" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="b0w-EN-fmi" id="lQs-Jv-KXX">
                                             <autoresizingMask key="autoresizingMask"/>
+                                            <subviews>
+                                                <label opaque="NO" userInteractionEnabled="NO" tag="100" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Author" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="67G-Sd-WQd">
+                                                    <rect key="frame" x="8" y="8" width="472" height="21"/>
+                                                    <constraints>
+                                                        <constraint firstAttribute="height" constant="21" id="4hQ-Dd-3pT"/>
+                                                    </constraints>
+                                                    <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                                    <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                                                    <nil key="highlightedColor"/>
+                                                </label>
+                                                <label opaque="NO" userInteractionEnabled="NO" tag="200" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Title" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="K5E-Yq-6gm">
+                                                    <rect key="frame" x="8" y="37" width="487" height="43"/>
+                                                    <constraints>
+                                                        <constraint firstAttribute="height" constant="43" id="k9f-6K-Sjt"/>
+                                                    </constraints>
+                                                    <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                                    <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                                                    <nil key="highlightedColor"/>
+                                                </label>
+                                                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="gfD-Fr-kdN">
+                                                    <rect key="frame" x="536" y="29" width="30" height="30"/>
+                                                    <constraints>
+                                                        <constraint firstAttribute="height" constant="30" id="Gty-gh-tBe"/>
+                                                        <constraint firstAttribute="width" constant="30" id="zPb-k7-fxA"/>
+                                                    </constraints>
+                                                    <state key="normal" title="Play">
+                                                        <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
+                                                    </state>
+                                                </button>
+                                            </subviews>
+                                            <constraints>
+                                                <constraint firstAttribute="trailingMargin" secondItem="67G-Sd-WQd" secondAttribute="trailing" constant="112" id="1Sb-Eg-hOQ"/>
+                                                <constraint firstAttribute="trailingMargin" secondItem="gfD-Fr-kdN" secondAttribute="trailing" constant="26" id="3Eb-08-6d4"/>
+                                                <constraint firstAttribute="trailingMargin" secondItem="K5E-Yq-6gm" secondAttribute="trailing" constant="97" id="GBD-fq-c6R"/>
+                                                <constraint firstItem="67G-Sd-WQd" firstAttribute="leading" secondItem="lQs-Jv-KXX" secondAttribute="leadingMargin" id="PLk-2T-2rf"/>
+                                                <constraint firstItem="67G-Sd-WQd" firstAttribute="top" secondItem="lQs-Jv-KXX" secondAttribute="topMargin" id="Sve-gb-6Oh"/>
+                                                <constraint firstItem="K5E-Yq-6gm" firstAttribute="top" secondItem="67G-Sd-WQd" secondAttribute="bottom" constant="8" id="YgL-7i-mwp"/>
+                                                <constraint firstItem="K5E-Yq-6gm" firstAttribute="leading" secondItem="lQs-Jv-KXX" secondAttribute="leadingMargin" id="fCa-II-rKe"/>
+                                                <constraint firstAttribute="centerY" secondItem="gfD-Fr-kdN" secondAttribute="centerY" id="xON-xc-Eyg"/>
+                                            </constraints>
                                         </tableViewCellContentView>
                                     </tableViewCell>
                                 </prototypes>

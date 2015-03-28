@@ -11,8 +11,9 @@ import UIKit
 class SearchCatalog: UIViewController {
     
     struct CellId {
-        static let searchResult = "SearchResult"
-        static let nothingFound = "NothingFound"
+        static let searchInProgressCell = "SearchInProgressCell"
+        static let recordCell = "RecordCell"
+        static let nothingFound = "NothingFoundCell"
     }
     
     // #MARK: - IB outlets
@@ -26,7 +27,19 @@ class SearchCatalog: UIViewController {
     var dataTask: NSURLSessionDataTask?
     var lastSearchQuery = ""
     var searchQueryHasNoResults: Bool {
-        return !lastSearchQuery.isEmpty && searchResults.isEmpty
+        if isLoading {
+            return false
+        }
+
+        if lastSearchQuery.isEmpty {
+            return false
+        }
+
+        if !searchResults.isEmpty {
+            return false
+        }
+
+        return true
     }
     var searchResults = [Record]()
     
@@ -73,7 +86,7 @@ class SearchCatalog: UIViewController {
 
     func getCatalogSearchUrlWithText(text: String) -> NSURL? {
         let escapedText = text.stringByAddingPercentEscapesUsingEncoding(NSUTF8StringEncoding)!
-        let urlString = String(format: "http://bumagi222.net/api/mds-catalog.php?q=%@", escapedText)        
+        let urlString = String(format: "http://bumagi.net/api/mds-catalog.php?q=%@", escapedText)        
         let url = NSURL(string: urlString)
 
         return url
@@ -117,6 +130,9 @@ class SearchCatalog: UIViewController {
                 throwErrorMessage("Сервер вернул код \(httpResponse!.statusCode). Попробуйте повторить запрос позже.",
                     withHandler: reloadTableInMainThread,
                     inViewController: self)
+            }
+            else if let json = self.pareseJsonData(data) {
+                self.applyDataFromJson(json)
             }
 
             reloadTableInMainThread()            
@@ -164,34 +180,22 @@ extension SearchCatalog: UITableViewDataSource {
             return getSearchInProgressCellForTableView(tableView)
         }
 
-        let cellId = searchQueryHasNoResults ? CellId.nothingFound : CellId.searchResult
-        var cell = tableView.dequeueReusableCellWithIdentifier(cellId) as UITableViewCell!
-        
-        if cell == nil {
-            cell = UITableViewCell(style: .Subtitle, reuseIdentifier: cellId)
-        }
-        
         if searchQueryHasNoResults {
-            cell.textLabel!.text = "nothing found"
+            return getNothingFoundCellForTableView(tableView)
         }
-        else {
-            let record = searchResults[indexPath.row]
 
-            cell.textLabel!.text = record.title
-            cell.detailTextLabel!.text = record.author
-        }
-        
-        return cell
+        return getRecordCellForTableView(tableView, atIndexPath: indexPath)
     }
     
     func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
-        let height: CGFloat = isLoading ? 88 : 44
+        let height: CGFloat = searchQueryHasNoResults ? 44 : 88
 
         return height
     }
 
     func getSearchInProgressCellForTableView(tableView: UITableView) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCellWithIdentifier("SearchInProgressCell") as UITableViewCell
+        let cellId = CellId.searchInProgressCell
+        let cell = tableView.dequeueReusableCellWithIdentifier(cellId) as UITableViewCell
         
         if let textLbl = cell.viewWithTag(100) as? UILabel {
             textLbl.text = "Ищем «\(lastSearchQuery)»"
@@ -202,6 +206,36 @@ extension SearchCatalog: UITableViewDataSource {
         }
         
         return cell
+    }
+
+    func getNothingFoundCellForTableView(tableView: UITableView) -> UITableViewCell {
+        let cellId = CellId.nothingFound
+        var cell = tableView.dequeueReusableCellWithIdentifier(cellId) as UITableViewCell?
+        
+        if cell == nil {
+            cell = UITableViewCell(style: .Default, reuseIdentifier: cellId)
+        }
+        
+        cell!.textLabel!.text = "Ничего не найдено..."
+        
+        return cell!
+    }
+
+    func getRecordCellForTableView(tableView: UITableView, atIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+        let cellId = CellId.recordCell
+        let cell = tableView.dequeueReusableCellWithIdentifier(cellId) as UITableViewCell
+        let record = searchResults[indexPath.row]
+
+        if let authorLbl = cell.viewWithTag(100) as? UILabel {
+            authorLbl.text = record.author
+        }
+
+        if let titleLbl = cell.viewWithTag(200) as? UILabel {
+            titleLbl.text = record.title
+        }
+        
+        return cell
+
     }
 }
 
