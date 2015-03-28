@@ -22,12 +22,13 @@ class SearchCatalog: UIViewController {
     
     // #MARK: - ivars
     
-    var searchResults = [Record]()
+    var isLoading = false
+    var dataTask: NSURLSessionDataTask?
     var lastSearchQuery = ""
     var searchQueryHasNoResults: Bool {
         return !lastSearchQuery.isEmpty && searchResults.isEmpty
     }
-    var catalogSearchInProcess = false
+    var searchResults = [Record]()
     
     
     // #MARK: - UIViewController methods
@@ -81,15 +82,17 @@ class SearchCatalog: UIViewController {
     func getCatalogSearchDataTaskWithUrl(url: NSURL) -> NSURLSessionDataTask {
         let session = NSURLSession.sharedSession()
         let dataTask = session.dataTaskWithURL(url, completionHandler: {data, response, error in
-            self.catalogSearchInProcess = false
-
             func reloadTableInMainThread() {
                 dispatch_async(dispatch_get_main_queue()) {
                     self.tableView.reloadData()
                 }
             }
 
+            self.isLoading = false
+
             if let error = error {
+                if error.code == -999 { return } // task cancelled
+
                 // The operation couldn’t be completed. (kCFErrorDomainCFNetwork error -1003.)
                 // It happens when URL is unreachable
                 println("error-1001: \(error)")
@@ -145,7 +148,7 @@ class SearchCatalog: UIViewController {
 
 extension SearchCatalog: UITableViewDataSource {
     func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        if catalogSearchInProcess {
+        if isLoading {
             return 1
         }
 
@@ -157,7 +160,7 @@ extension SearchCatalog: UITableViewDataSource {
     }
 
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
-        if catalogSearchInProcess {
+        if isLoading {
             return getSearchInProcessCellForTableView(tableView)
         }
 
@@ -182,7 +185,7 @@ extension SearchCatalog: UITableViewDataSource {
     }
     
     func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
-        let height: CGFloat = catalogSearchInProcess ? 88 : 44
+        let height: CGFloat = isLoading ? 88 : 44
 
         return height
     }
@@ -236,13 +239,14 @@ extension SearchCatalog: UISearchBarDelegate {
             return
         }
 
-        lastSearchQuery = searchBar.text
+        dataTask?.cancel()
 
-        let dataTask = getCatalogSearchDataTaskWithUrl(url!)
-        catalogSearchInProcess = true
+        lastSearchQuery = searchBar.text
+        isLoading = true
         tableView.reloadData()
 
-        dataTask.resume()
+        dataTask = getCatalogSearchDataTaskWithUrl(url!)
+        dataTask?.resume()
     }
 }
 
