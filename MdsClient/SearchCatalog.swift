@@ -161,7 +161,7 @@ extension SearchCatalog: UITableViewDataSource {
 
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
         if isLoading {
-            return getSearchInProcessCellForTableView(tableView)
+            return getSearchInProgressCellForTableView(tableView)
         }
 
         let cellId = searchQueryHasNoResults ? CellId.nothingFound : CellId.searchResult
@@ -190,8 +190,8 @@ extension SearchCatalog: UITableViewDataSource {
         return height
     }
 
-    func getSearchInProcessCellForTableView(tableView: UITableView) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCellWithIdentifier("SearchInProcessCell") as UITableViewCell
+    func getSearchInProgressCellForTableView(tableView: UITableView) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCellWithIdentifier("SearchInProgressCell") as UITableViewCell
         
         if let textLbl = cell.viewWithTag(100) as? UILabel {
             textLbl.text = "Ищем «\(lastSearchQuery)»"

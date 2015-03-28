@@ -53,28 +53,37 @@
                                             <autoresizingMask key="autoresizingMask"/>
                                         </tableViewCellContentView>
                                     </tableViewCell>
-                                    <tableViewCell contentMode="scaleToFill" restorationIdentifier="SearchInProcessCell" selectionStyle="default" indentationWidth="10" reuseIdentifier="SearchInProcessCell" rowHeight="88" id="BYR-yb-WFu">
+                                    <tableViewCell contentMode="scaleToFill" restorationIdentifier="SearchInProcessCell" selectionStyle="default" indentationWidth="10" reuseIdentifier="SearchInProgressCell" rowHeight="88" id="BYR-yb-WFu">
                                         <rect key="frame" x="0.0" y="0.0" width="600" height="44"/>
                                         <autoresizingMask key="autoresizingMask"/>
                                         <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="BYR-yb-WFu" id="mZk-Zt-yQl">
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
-                                                <label opaque="NO" userInteractionEnabled="NO" tag="100" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Hi there" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="g3G-F2-guo">
-                                                    <rect key="frame" x="270" y="34" width="60" height="21"/>
+                                                <label opaque="NO" userInteractionEnabled="NO" tag="100" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Searching-for message" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="g3G-F2-guo">
+                                                    <rect key="frame" x="211" y="34" width="179" height="20.5"/>
+                                                    <constraints>
+                                                        <constraint firstAttribute="width" constant="179" id="WAz-ov-O5T"/>
+                                                    </constraints>
                                                     <fontDescription key="fontDescription" type="system" pointSize="17"/>
                                                     <nil key="highlightedColor"/>
                                                 </label>
                                                 <activityIndicatorView opaque="NO" tag="200" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" style="gray" translatesAutoresizingMaskIntoConstraints="NO" id="rB8-ML-wjv">
-                                                    <rect key="frame" x="338" y="35" width="20" height="20"/>
+                                                    <rect key="frame" x="398" y="34" width="20" height="20"/>
                                                 </activityIndicatorView>
                                             </subviews>
                                             <constraints>
-                                                <constraint firstItem="rB8-ML-wjv" firstAttribute="leading" secondItem="g3G-F2-guo" secondAttribute="trailing" constant="8" symbolic="YES" id="1xr-8z-xj0"/>
-                                                <constraint firstAttribute="centerY" secondItem="g3G-F2-guo" secondAttribute="centerY" id="IGL-hC-9FT"/>
-                                                <constraint firstAttribute="centerX" secondItem="g3G-F2-guo" secondAttribute="centerX" id="maL-55-XzU"/>
-                                                <constraint firstItem="rB8-ML-wjv" firstAttribute="top" secondItem="mZk-Zt-yQl" secondAttribute="topMargin" constant="27" id="rKw-kf-D6n"/>
-                                                <constraint firstItem="rB8-ML-wjv" firstAttribute="bottom" secondItem="g3G-F2-guo" secondAttribute="bottom" id="wMl-dD-16Y"/>
+                                                <constraint firstItem="g3G-F2-guo" firstAttribute="top" secondItem="mZk-Zt-yQl" secondAttribute="topMargin" constant="26" id="0js-YI-cxH"/>
+                                                <constraint firstAttribute="centerY" secondItem="rB8-ML-wjv" secondAttribute="centerY" id="Gfw-bW-vgP"/>
+                                                <constraint firstItem="rB8-ML-wjv" firstAttribute="leading" secondItem="g3G-F2-guo" secondAttribute="trailing" constant="8" id="TSM-8C-Pyp"/>
+                                                <constraint firstItem="g3G-F2-guo" firstAttribute="centerX" secondItem="mZk-Zt-yQl" secondAttribute="centerX" id="lQT-or-V3D"/>
                                             </constraints>
+                                        </tableViewCellContentView>
+                                    </tableViewCell>
+                                    <tableViewCell contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" rowHeight="88" id="b0w-EN-fmi">
+                                        <rect key="frame" x="0.0" y="0.0" width="600" height="44"/>
+                                        <autoresizingMask key="autoresizingMask"/>
+                                        <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="b0w-EN-fmi" id="lQs-Jv-KXX">
+                                            <autoresizingMask key="autoresizingMask"/>
                                         </tableViewCellContentView>
                                     </tableViewCell>
                                 </prototypes>
@@ -333,7 +342,7 @@
         </scene>
     </scenes>
     <resources>
-        <image name="Most viewed" width="16" height="16"/>
+        <image name="Most viewed" width="147" height="231"/>
     </resources>
     <inferredMetricsTieBreakers>
         <segue reference="jN9-C0-igq"/>
