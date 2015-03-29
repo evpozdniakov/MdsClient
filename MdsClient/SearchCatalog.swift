@@ -20,6 +20,19 @@ class SearchCatalog: UIViewController {
 
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var searchBar: UISearchBar!
+
+    // #MARK: - IB Actions
+
+    @IBAction func playButtonClicked(sender: UIButton) {
+        if let cellContent = sender.superview {
+            if let cell = cellContent.superview as? UITableViewCell {
+                println("cell found")
+                if let indexPath = tableView.indexPathForCell(cell) {
+                    println("indexPath: \(indexPath)")
+                }
+            }
+        }
+    }
     
     // #MARK: - ivars
     
