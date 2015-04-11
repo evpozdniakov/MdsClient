@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import AVFoundation
 
 class SearchCatalog: UIViewController {
     
@@ -28,7 +29,31 @@ class SearchCatalog: UIViewController {
             if let cell = cellContent.superview as? UITableViewCell {
                 println("cell found")
                 if let indexPath = tableView.indexPathForCell(cell) {
-                    println("indexPath: \(indexPath)")
+                    let record = searchResults[indexPath.row]
+                    println("record: \(record)")
+
+                    if record.sources == nil || record.sources!.isEmpty {
+                        throwErrorMessage("Отсутствуют ссылки на загрузку файла.", withHandler: nil, inViewController: self)
+                        return
+                    }
+
+                    let url = record.sources![1].url
+                    println("lets play \(url)")
+
+                    var error: NSError?
+                    var audioPlayer:AVAudioPlayer?
+                    audioPlayer = AVAudioPlayer(contentsOfURL: url,
+                        fileTypeHint: AVFileTypeMPEGLayer3,
+                        error: &error)
+
+                    if let error = error {
+                        println("error: \(error)")
+                        return
+                    }
+
+                    sender.enabled = false
+                    audioPlayer!.prepareToPlay()
+                    audioPlayer!.play()
                 }
             }
         }
@@ -65,6 +90,9 @@ class SearchCatalog: UIViewController {
         
         tableView.contentInset = UIEdgeInsets(top: 44, left: 0, bottom: 0, right: 0)
         searchBar.becomeFirstResponder()
+
+        // get records json
+        getRecordsJson()
     }
 
     /*override func didReceiveMemoryWarning() {
@@ -74,7 +102,7 @@ class SearchCatalog: UIViewController {
 
     // #MARK: - helpers
 
-    func pareseJsonData(data: NSData) -> [AnyObject]? {
+    func parseJsonData(data: NSData) -> [AnyObject]? {
         var error: NSError?
         
         if let json = NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions(0), error: &error) as? [AnyObject] {
@@ -128,7 +156,7 @@ class SearchCatalog: UIViewController {
                 return
             }
 
-            let httpResponse = response as NSHTTPURLResponse?
+            let httpResponse = response as? NSHTTPURLResponse
 
             if httpResponse == nil || httpResponse!.statusCode == 500 {
                 // Server didn't return any response
@@ -144,7 +172,7 @@ class SearchCatalog: UIViewController {
                     withHandler: reloadTableInMainThread,
                     inViewController: self)
             }
-            else if let json = self.pareseJsonData(data) {
+            else if let json = self.parseJsonData(data) {
                 self.applyDataFromJson(json)
             }
 
@@ -159,17 +187,23 @@ class SearchCatalog: UIViewController {
 
         for entry in json {
             if let entry = entry as? [String: AnyObject] {
-                // println("entry is \(entry)")
-
-                let title = entry["title"] as String?
-                let author = entry["author"] as String?
-                // let size = entry["size"] as String?
-
-                if title != nil && author != nil {
-                    searchResults.append(Record(author: author!, title: title!))
+                println("entry is \(entry)")
+                
+                if let title = entry["title"] as? String {
+                    if let author = entry["author"] as? String {
+                        if let size = entry["size"] as? String {
+                            if let sources = entry["sources"] as? [AnyObject] {
+                                searchResults.append(Record(author: author, title: title, sources: sources))
+                            }
+                        }
+                    }
                 }
             }
         }
+    }
+
+    func getRecordsJson() {
+        let token = Access.generateToken()
     }
 }
 
@@ -208,7 +242,7 @@ extension SearchCatalog: UITableViewDataSource {
 
     func getSearchInProgressCellForTableView(tableView: UITableView) -> UITableViewCell {
         let cellId = CellId.searchInProgressCell
-        let cell = tableView.dequeueReusableCellWithIdentifier(cellId) as UITableViewCell
+        let cell = tableView.dequeueReusableCellWithIdentifier(cellId) as! UITableViewCell
         
         if let textLbl = cell.viewWithTag(100) as? UILabel {
             textLbl.text = "Ищем «\(lastSearchQuery)»"
@@ -223,7 +257,7 @@ extension SearchCatalog: UITableViewDataSource {
 
     func getNothingFoundCellForTableView(tableView: UITableView) -> UITableViewCell {
         let cellId = CellId.nothingFound
-        var cell = tableView.dequeueReusableCellWithIdentifier(cellId) as UITableViewCell?
+        var cell = tableView.dequeueReusableCellWithIdentifier(cellId) as? UITableViewCell
         
         if cell == nil {
             cell = UITableViewCell(style: .Default, reuseIdentifier: cellId)
@@ -236,7 +270,7 @@ extension SearchCatalog: UITableViewDataSource {
 
     func getRecordCellForTableView(tableView: UITableView, atIndexPath indexPath: NSIndexPath) -> UITableViewCell {
         let cellId = CellId.recordCell
-        let cell = tableView.dequeueReusableCellWithIdentifier(cellId) as UITableViewCell
+        let cell = tableView.dequeueReusableCellWithIdentifier(cellId) as! UITableViewCell
         let record = searchResults[indexPath.row]
 
         if let authorLbl = cell.viewWithTag(100) as? UILabel {
