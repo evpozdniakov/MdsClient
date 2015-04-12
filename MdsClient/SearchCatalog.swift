@@ -71,17 +71,12 @@ class SearchCatalog: UIViewController {
         // Do any additional setup after loading the view, typically from a nib.
         assert(dataModel != nil)
 
-        tableView.contentInset = UIEdgeInsets(top: 44, left: 0, bottom: 0, right: 0)
+        setTableViewMargings()
         searchBar.becomeFirstResponder()
 
         // ask dataModel to load records
         dataModel!.loadRecords()
     }
-
-    /*override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
-    }*/
 
     // #MARK: - helpers
 
@@ -93,6 +88,12 @@ class SearchCatalog: UIViewController {
         return url
     }
 
+    // #MARK: - redraw
+
+    func setTableViewMargings() {
+        tableView.contentInset = UIEdgeInsets(top: 66, left: 0, bottom: 49, right: 0)
+    }
+
 }
 
 // #MARK: - UITableViewDataSource
@@ -101,7 +102,11 @@ extension SearchCatalog: UITableViewDataSource {
     func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         assert(dataModel != nil)
 
-        return dataModel!.records.count
+        if let records = dataModel!.filteredRecords {
+            return records.count
+        }
+
+        return 0
     }
 
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
@@ -120,14 +125,17 @@ extension SearchCatalog: UITableViewDataSource {
 
         let cellId = CellId.recordCell
         let cell = tableView.dequeueReusableCellWithIdentifier(cellId) as! UITableViewCell
-        let record = dataModel!.records[indexPath.row]
 
-        if let authorLbl = cell.viewWithTag(100) as? UILabel {
-            authorLbl.text = record.author
-        }
+        if let records = dataModel!.filteredRecords {
+            let record = records[indexPath.row]
 
-        if let titleLbl = cell.viewWithTag(200) as? UILabel {
-            titleLbl.text = record.title
+            if let authorLbl = cell.viewWithTag(100) as? UILabel {
+                authorLbl.text = record.author
+            }
+
+            if let titleLbl = cell.viewWithTag(200) as? UILabel {
+                titleLbl.text = record.title
+            }            
         }
 
         return cell
@@ -153,7 +161,15 @@ extension SearchCatalog: UITableViewDelegate {
 
 extension SearchCatalog: UISearchBarDelegate {
     func searchBarSearchButtonClicked(searchBar: UISearchBar) {
-        println("search button clicked, search string: '\(searchBar.text)'")
+        assert(dataModel != nil)
+        // println("search button clicked, search string: '\(searchBar.text)'")
+        searchBar.resignFirstResponder()
+        dataModel!.filterRecordsWithText(searchBar.text)
+        tableView.reloadData()
+    }
+
+    func positionForBar(bar: UIBarPositioning) -> UIBarPosition {
+        return .TopAttached
     }
 }
 

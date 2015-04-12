@@ -1,11 +1,13 @@
 import Foundation
 
 class DataModel: NSObject {
-    var records = [Record]()
+
+    var allRecords = [Record]()
+    var filteredRecords: [Record]?
 
     func fillRecordsWithJsonData(data: NSData) {
         if let json = parseJsonData(data) {
-            records = [Record]()
+            allRecords = [Record]()
 
             for entry in json {
                 if let entry = entry as? [String: AnyObject] {
@@ -25,7 +27,7 @@ class DataModel: NSObject {
                         let readDate = entry["readedAt"] as? String,
                         let station = entry["radioStation"] as? String {
                         let record = Record(id: id, author: author, title: title, readDate: readDate, station: station)
-                        records.append(record)
+                        allRecords.append(record)
                     }
                 }
             }
@@ -56,11 +58,12 @@ class DataModel: NSObject {
 
     // will store records in local file DataModel.plist under key "AllRecords"
     func storeRecords() {
+        assert(allRecords.count > 0)
+
         if let filePath = getDataFilePath() {
-            assert(records.count > 0)
             let data = NSMutableData()
             let archiver = NSKeyedArchiver(forWritingWithMutableData: data)
-            archiver.encodeObject(records, forKey: "AllRecords")
+            archiver.encodeObject(allRecords, forKey: "AllRecords")
             archiver.finishEncoding()
             let dataWrittenSuccessfully = data.writeToFile(filePath, atomically: true)
             if !dataWrittenSuccessfully {
@@ -78,8 +81,8 @@ class DataModel: NSObject {
             if NSFileManager.defaultManager().fileExistsAtPath(filePath) {
                 if let data = NSData(contentsOfFile: filePath) {
                     let unarchiver = NSKeyedUnarchiver(forReadingWithData: data)
-                    if let records = unarchiver.decodeObjectForKey("AllRecords") as? [Record] {
-                        self.records = records
+                    if let allRecords = unarchiver.decodeObjectForKey("AllRecords") as? [Record] {
+                        self.allRecords = allRecords
                     }
                     else {
                         // #FIXME: impossible to convert unarchived data to [Record]
@@ -135,6 +138,19 @@ class DataModel: NSObject {
         if let url = url {
             Ajax.get(url: url) { data in
                 self.fillRecordsWithJsonData(data)
+            }
+        }
+    }
+
+    // 
+    func filterRecordsWithText(searchString: String) {
+        let searchStringLowercase = searchString.lowercaseString
+
+        filteredRecords = [Record]()
+        for record in allRecords {
+            if record.title.lowercaseString.rangeOfString(searchStringLowercase) != nil ||
+                record.author.lowercaseString.rangeOfString(searchStringLowercase) != nil {
+                    filteredRecords!.append(record)
             }
         }
     }
