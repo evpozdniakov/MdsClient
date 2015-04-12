@@ -30,7 +30,6 @@ class DataModel: NSObject {
                 }
             }
 
-            println("============= records created from json")
             // #FIXME: send success notification
             storeRecords()
         }
@@ -49,7 +48,6 @@ class DataModel: NSObject {
         }
         else {
             // Error: JSON could be parsed, but it can be casted to [AnyObject] format
-            // println("some error: may be unexpected json structure")
             println("data-model-error-1002")
         }
 
@@ -87,7 +85,6 @@ class DataModel: NSObject {
                         // #FIXME: impossible to convert unarchived data to [Record]
                     }
                     unarchiver.finishDecoding()
-                    println("---------- data read successfully")
                     // #FIXME: send success notification
                 }
                 else {
@@ -120,8 +117,6 @@ class DataModel: NSObject {
     // returns path to documents directory as String
     func documementsDirectory() -> String? {
         if let paths = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true) as? [String] {
-            println("paths: \(paths)")
-            println("paths[0]: \(paths[0])")
             return paths[0]
         }
         else {
@@ -133,7 +128,6 @@ class DataModel: NSObject {
 
     // initialize retreiving remote records json
     func getRecordsJson() {
-        println("------------ data json will load")
         let token = Access.generateToken()
         let urlString = "http://core.mds-club.ru/api/v1.0/mds/records/?access-token=" + token
         let url = NSURL(string: urlString)
