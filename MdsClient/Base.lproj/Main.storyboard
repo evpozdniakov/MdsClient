@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="6751" systemVersion="14C1514" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" initialViewController="3Fz-9J-RTo">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="7531" systemVersion="14C1514" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" initialViewController="3Fz-9J-RTo">
     <dependencies>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="6736"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="7520"/>
         <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
     </dependencies>
     <scenes>
@@ -60,7 +60,7 @@
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <label opaque="NO" userInteractionEnabled="NO" tag="100" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Searching-for message" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="g3G-F2-guo">
-                                                    <rect key="frame" x="211" y="34" width="179" height="20.5"/>
+                                                    <rect key="frame" x="211" y="34" width="179" height="21"/>
                                                     <constraints>
                                                         <constraint firstAttribute="width" constant="179" id="WAz-ov-O5T"/>
                                                     </constraints>
@@ -133,7 +133,7 @@
                                 </connections>
                             </tableView>
                             <searchBar contentMode="redraw" translatesAutoresizingMaskIntoConstraints="NO" id="Z5N-2Z-8SI">
-                                <rect key="frame" x="0.0" y="64" width="600" height="44"/>
+                                <rect key="frame" x="0.0" y="20" width="600" height="44"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="44" id="c7S-5x-LRs"/>
                                 </constraints>
@@ -154,12 +154,9 @@
                             <constraint firstItem="Z5N-2Z-8SI" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" id="sbe-uO-RY7"/>
                         </constraints>
                     </view>
+                    <tabBarItem key="tabBarItem" systemItem="search" id="OQk-cm-Bzx"/>
                     <navigationItem key="navigationItem" title="Catalog" id="UHd-nx-wnA">
-                        <barButtonItem key="rightBarButtonItem" title="Now playing" id="vd8-ah-nVx">
-                            <connections>
-                                <segue destination="UHe-q5-9vt" kind="show" id="jN9-C0-igq"/>
-                            </connections>
-                        </barButtonItem>
+                        <barButtonItem key="rightBarButtonItem" title="Now playing" id="vd8-ah-nVx"/>
                     </navigationItem>
                     <connections>
                         <outlet property="searchBar" destination="Z5N-2Z-8SI" id="APD-8E-mYW"/>
@@ -168,7 +165,7 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-530" y="1908"/>
+            <point key="canvasLocation" x="-1208" y="1914"/>
         </scene>
         <!--Downloads-->
         <scene sceneID="8KF-Mq-02s">
@@ -274,7 +271,7 @@
                         <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
                     </tabBar>
                     <connections>
-                        <segue destination="gKe-F7-eny" kind="relationship" relationship="viewControllers" id="j96-VL-bQ5"/>
+                        <segue destination="BYZ-38-t0r" kind="relationship" relationship="viewControllers" id="5fL-tn-jpj"/>
                         <segue destination="IyY-3d-KeV" kind="relationship" relationship="viewControllers" id="TAi-CN-u9h"/>
                         <segue destination="MpB-ke-Y4J" kind="relationship" relationship="viewControllers" id="xnL-gu-Bac"/>
                         <segue destination="qmj-5S-LOe" kind="relationship" relationship="viewControllers" id="MNf-9s-eiw"/>
@@ -284,25 +281,6 @@
                 <placeholder placeholderIdentifier="IBFirstResponder" id="1YG-CJ-gs3" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="-2204" y="3304"/>
-        </scene>
-        <!--Navigation Controller-->
-        <scene sceneID="VMZ-Wg-gJt">
-            <objects>
-                <navigationController automaticallyAdjustsScrollViewInsets="NO" id="gKe-F7-eny" sceneMemberID="viewController">
-                    <tabBarItem key="tabBarItem" systemItem="search" id="Cze-EV-IT5"/>
-                    <toolbarItems/>
-                    <navigationBar key="navigationBar" contentMode="scaleToFill" id="fPy-H1-sbd">
-                        <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
-                        <autoresizingMask key="autoresizingMask"/>
-                    </navigationBar>
-                    <nil name="viewControllers"/>
-                    <connections>
-                        <segue destination="BYZ-38-t0r" kind="relationship" relationship="rootViewController" id="Kq4-9K-Urt"/>
-                    </connections>
-                </navigationController>
-                <placeholder placeholderIdentifier="IBFirstResponder" id="34W-cT-niX" userLabel="First Responder" sceneMemberID="firstResponder"/>
-            </objects>
-            <point key="canvasLocation" x="-1208" y="1908"/>
         </scene>
         <!--Navigation Controller-->
         <scene sceneID="BTc-eL-k8t">
@@ -385,6 +363,6 @@
         <image name="Most viewed" width="147" height="231"/>
     </resources>
     <inferredMetricsTieBreakers>
-        <segue reference="jN9-C0-igq"/>
+        <segue reference="FSu-NW-kdo"/>
     </inferredMetricsTieBreakers>
 </document>

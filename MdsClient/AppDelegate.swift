@@ -34,10 +34,23 @@ func throwErrorMessage(message: String, withHandler handler: (Void -> Void)?, in
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
+    var dataModel: DataModel?
 
 
     func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
         // Override point for customization after application launch.
+        dataModel = DataModel()
+        
+        if let window = window {
+            if let tabCtlr = window.rootViewController as? UITabBarController {
+                if let viewControllers = tabCtlr.viewControllers {
+                    if let ctlr = viewControllers[0] as? SearchCatalog {
+                        ctlr.dataModel = dataModel
+                    }
+                }
+            }
+        }
+        
         return true
     }
 

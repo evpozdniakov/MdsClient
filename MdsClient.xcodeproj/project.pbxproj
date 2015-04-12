@@ -10,6 +10,8 @@
 		9A50801B1AD99EFD00D15586 /* Access.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A50801A1AD99EFD00D15586 /* Access.swift */; };
 		9A5080211AD9B14700D15586 /* JFBCrypt.m in Sources */ = {isa = PBXBuildFile; fileRef = 9A50801D1AD9B14700D15586 /* JFBCrypt.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		9A5080221AD9B14700D15586 /* JFRandom.m in Sources */ = {isa = PBXBuildFile; fileRef = 9A5080201AD9B14700D15586 /* JFRandom.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
+		9A5080261AD9BEA300D15586 /* Ajax.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A5080251AD9BEA300D15586 /* Ajax.swift */; };
+		9A5080281AD9E70B00D15586 /* DataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A5080271AD9E70B00D15586 /* DataModel.swift */; };
 		9AEB58B41AB6318100BF103F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AEB58B31AB6318100BF103F /* AppDelegate.swift */; };
 		9AEB58B61AB6318100BF103F /* SearchCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AEB58B51AB6318100BF103F /* SearchCatalog.swift */; };
 		9AEB58B91AB6318100BF103F /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 9AEB58B71AB6318100BF103F /* Main.storyboard */; };
@@ -37,6 +39,8 @@
 		9A50801F1AD9B14700D15586 /* JFRandom.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JFRandom.h; sourceTree = "<group>"; };
 		9A5080201AD9B14700D15586 /* JFRandom.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = JFRandom.m; sourceTree = "<group>"; };
 		9A5080231AD9B1A400D15586 /* MdsClient-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "MdsClient-Bridging-Header.h"; sourceTree = "<group>"; };
+		9A5080251AD9BEA300D15586 /* Ajax.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Ajax.swift; sourceTree = "<group>"; };
+		9A5080271AD9E70B00D15586 /* DataModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DataModel.swift; sourceTree = "<group>"; };
 		9AEB58AE1AB6318100BF103F /* MdsClient.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MdsClient.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9AEB58B21AB6318100BF103F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		9AEB58B31AB6318100BF103F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -105,6 +109,8 @@
 			children = (
 				9A5080241AD9B33D00D15586 /* Access */,
 				9AEB58B31AB6318100BF103F /* AppDelegate.swift */,
+				9A5080251AD9BEA300D15586 /* Ajax.swift */,
+				9A5080271AD9E70B00D15586 /* DataModel.swift */,
 				9AEB58B71AB6318100BF103F /* Main.storyboard */,
 				9AEB58B51AB6318100BF103F /* SearchCatalog.swift */,
 				9AEB58D31AB9241100BF103F /* Record.swift */,
@@ -240,10 +246,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9A5080261AD9BEA300D15586 /* Ajax.swift in Sources */,
 				9A5080221AD9B14700D15586 /* JFRandom.m in Sources */,
 				9A5080211AD9B14700D15586 /* JFBCrypt.m in Sources */,
 				9AEB58B61AB6318100BF103F /* SearchCatalog.swift in Sources */,
 				9AEB58B41AB6318100BF103F /* AppDelegate.swift in Sources */,
+				9A5080281AD9E70B00D15586 /* DataModel.swift in Sources */,
 				9AEB58D41AB9241100BF103F /* Record.swift in Sources */,
 				9A50801B1AD99EFD00D15586 /* Access.swift in Sources */,
 			);

@@ -29,7 +29,7 @@ class SearchCatalog: UIViewController {
             if let cell = cellContent.superview as? UITableViewCell {
                 println("cell found")
                 if let indexPath = tableView.indexPathForCell(cell) {
-                    let record = searchResults[indexPath.row]
+                    /* let record = searchResults[indexPath.row]
                     println("record: \(record)")
 
                     if record.sources == nil || record.sources!.isEmpty {
@@ -53,7 +53,7 @@ class SearchCatalog: UIViewController {
 
                     sender.enabled = false
                     audioPlayer!.prepareToPlay()
-                    audioPlayer!.play()
+                    audioPlayer!.play() */
                 }
             }
         }
@@ -61,6 +61,7 @@ class SearchCatalog: UIViewController {
     
     // #MARK: - ivars
     
+    var dataModel: DataModel?
     var isLoading = false
     var dataTask: NSURLSessionDataTask?
     var lastSearchQuery = ""
@@ -87,12 +88,13 @@ class SearchCatalog: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
-        
+        assert(dataModel != nil)
+
         tableView.contentInset = UIEdgeInsets(top: 44, left: 0, bottom: 0, right: 0)
         searchBar.becomeFirstResponder()
 
-        // get records json
-        getRecordsJson()
+        // ask dataModel to load records
+        dataModel!.loadRecords()
     }
 
     /*override func didReceiveMemoryWarning() {
@@ -102,29 +104,6 @@ class SearchCatalog: UIViewController {
 
     // #MARK: - helpers
 
-    func parseJsonData(data: NSData) -> [AnyObject]? {
-        var error: NSError?
-        
-        if let json = NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions(0), error: &error) as? [AnyObject] {
-            return json
-        }
-        
-        if let error = error {
-            // Cocoa error 3840: JSON text did not start with array or object and option to allow fragments not set
-            println("error-1004: \(error)")
-        }
-        else {
-            // Error: JSON could be parsed, but it can be casted to [AnyObject] format
-            // println("some error: may be unexpected json structure")
-            println("error-1005")
-        }
-
-        throwErrorMessage("Сервер вернул данные, которые невозможно прочитать. Попробуйте повторить запрос позже.",
-            withHandler: nil,
-            inViewController: self)
-        return nil
-    }
-
     func getCatalogSearchUrlWithText(text: String) -> NSURL? {
         let escapedText = text.stringByAddingPercentEscapesUsingEncoding(NSUTF8StringEncoding)!
         let urlString = String(format: "http://bumagi.net/api/mds-catalog.php?q=%@", escapedText)        
@@ -133,7 +112,7 @@ class SearchCatalog: UIViewController {
         return url
     }
 
-    func getCatalogSearchDataTaskWithUrl(url: NSURL) -> NSURLSessionDataTask {
+    /* func getCatalogSearchDataTaskWithUrl(url: NSURL) -> NSURLSessionDataTask {
         let session = NSURLSession.sharedSession()
         let dataTask = session.dataTaskWithURL(url, completionHandler: {data, response, error in
             func reloadTableInMainThread() {
@@ -180,31 +159,7 @@ class SearchCatalog: UIViewController {
         })
 
         return dataTask
-    }
-
-    func applyDataFromJson(json: [AnyObject]) {
-        searchResults = [Record]()
-
-        for entry in json {
-            if let entry = entry as? [String: AnyObject] {
-                println("entry is \(entry)")
-                
-                if let title = entry["title"] as? String {
-                    if let author = entry["author"] as? String {
-                        if let size = entry["size"] as? String {
-                            if let sources = entry["sources"] as? [AnyObject] {
-                                searchResults.append(Record(author: author, title: title, sources: sources))
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    func getRecordsJson() {
-        let token = Access.generateToken()
-    }
+    } */
 }
 
 // #MARK: - UITableViewDataSource
@@ -326,7 +281,7 @@ extension SearchCatalog: UISearchBarDelegate {
         isLoading = true
         tableView.reloadData()
 
-        dataTask = getCatalogSearchDataTaskWithUrl(url!)
+        // dataTask = getCatalogSearchDataTaskWithUrl(url!)
         dataTask?.resume()
     }
 }
