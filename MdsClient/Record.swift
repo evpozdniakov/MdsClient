@@ -1,14 +1,6 @@
 import Foundation
 
-/* struct RecordSource {
-    var domain: String
-    var url: NSURL
-    
-    init(domain: String, url: NSURL) {
-        self.domain = domain
-        self.url = url
-    }
-} */
+var getRecordAudioDataTask: NSURLSessionDataTask?
 
 class Record: NSObject, NSCoding {
     var id: Int
@@ -17,6 +9,8 @@ class Record: NSObject, NSCoding {
     var readDate: NSDate?
     var year: String
     var station: String
+    var tracks: [Track]
+    var hasNoTracks: Bool
 
     // "id": 1332,
     // "createAt": "2012-04-08T18:28:27+04:00",
@@ -27,36 +21,33 @@ class Record: NSObject, NSCoding {
     // "radioStation": "Пионер FM",
     // "following": 2
     
-    init(id: Int, author: String, title: String, readDate dateString: String, station: String) {
+    init(id: Int, author: String, title: String, readDate: NSDate?, year: String, station: String, tracks: [Track], hasNoTracks: Bool) {
         self.id = id
         self.author = author
         self.title = title
-
-        let dateFormatter = NSDateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssxxx" /*find out and place date format from http://userguide.icu-project.org/formatparse/datetime*/
-        if let readDate = dateFormatter.dateFromString(dateString) {
-            let calendar = NSCalendar.currentCalendar()
-            let components = calendar.components(.CalendarUnitYear, fromDate: readDate)
-            self.readDate = readDate
-            self.year = String(components.year)
-        }
-        else {
-            self.year = ""
-        }
-
+        self.readDate = readDate
+        self.year = year
         self.station = station
+        self.tracks = tracks
+        self.hasNoTracks = hasNoTracks
+    }
 
-        /* for source in sources {
-	        if let source = source as? [String: AnyObject] {
-                if let domain = source["domain"] as? String {
-                    if let urlString = source["url"] as? String {
-                        if let url = NSURL(string: urlString) {
-                            self.sources?.append(RecordSource(domain: domain, url: url))
-                        }
-                    }
-                }
-	        }
-        } */
+    convenience init(id: Int, author: String, title: String, readDate dateString: String, station: String) {
+        var readDate: NSDate?
+        var year = ""
+        let tracks = [Track]()
+        let hasNoTracks = false
+        let dateFormatter = NSDateFormatter()
+
+        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssxxx" /*find out and place date format from http://userguide.icu-project.org/formatparse/datetime*/
+        if let date = dateFormatter.dateFromString(dateString) {
+            let calendar = NSCalendar.currentCalendar()
+            let components = calendar.components(.CalendarUnitYear, fromDate: date)
+            readDate = date
+            year = String(components.year)
+        }
+
+        self.init(id: id, author: author, title: title, readDate: readDate, year: year, station: station, tracks: tracks, hasNoTracks: hasNoTracks)
     }
     
     required init(coder aDecoder: NSCoder) {
@@ -66,6 +57,8 @@ class Record: NSObject, NSCoding {
         readDate = aDecoder.decodeObjectForKey("ReadDate") as! NSDate?
         year = aDecoder.decodeObjectForKey("Year") as! String
         station = aDecoder.decodeObjectForKey("Station") as! String
+        tracks = aDecoder.decodeObjectForKey("Tracks") as! [Track]
+        hasNoTracks = aDecoder.decodeBoolForKey("HasNoTracks")
 
         super.init()
     }
@@ -77,5 +70,91 @@ class Record: NSObject, NSCoding {
         aCoder.encodeObject(readDate, forKey: "ReadDate")
         aCoder.encodeObject(year, forKey: "Year")
         aCoder.encodeObject(station, forKey: "Station")
+        aCoder.encodeObject(tracks, forKey: "Tracks")
+        aCoder.encodeBool(hasNoTracks, forKey: "HasNoTracks")
     }
+
+    func extendTracksWithJsonData(data: NSData) {
+        if let json = Ajax.parseJsonArray(data) {
+            var tracks = [Track]()
+
+            for entry in json {
+                if let entry = entry as? [String: AnyObject] {
+
+                    // id = 12772;
+                    // bitrate = 168kbps;
+                    // channels = Stereo;
+                    // mode = VBR;
+                    // size = 11141120;
+                    // url = "http://mds.mds-club.ru/Kir_Bulychev_-_Oni_uzhe_zdes'!.mp3";
+
+                    if let id = entry["id"] as? Int,
+                        let bitrate = entry["bitrate"] as? String,
+                        let channels = entry["channels"] as? String,
+                        let mode = entry["mode"] as? String,
+                        let size = entry["size"] as? Int,
+                        let urlString = entry["url"] as? String {
+                            if let url = NSURL(string:urlString) {
+                                let track = Track(id: id, bitrate: bitrate, channels: channels, mode: mode, size: size, url: url)
+                                tracks.append(track)
+                            }
+                            else {
+                                // #FIXME: problem with creaing url
+                            }
+                    }
+                    else {
+                        // #FIXME: unable to parse json entry
+                    }
+                }
+                else {
+                    // #FIXME: unable to parse json
+                }
+            }
+
+            if tracks.count > 0 {
+                self.tracks = tracks
+            }
+            else {
+                // #FIXME: why?
+            }
+        }
+        else {
+            // #FIXME: no json returned
+        }
+    }
+
+    // if the record has tracks, returns first playable record
+    // otherwise initializes tracks json downloading/parsing
+    func getFirstPlayableTrack(completionHandler: (Track?) -> Void) {
+        if tracks.count > 0 {
+            completionHandler(tracks[0])
+        }
+        else if hasNoTracks {
+            completionHandler(nil)
+        }
+        else {
+            fillTracksWithRemoteData() {
+                if self.tracks.count > 0 {
+                    completionHandler(self.tracks[0])
+                }
+                else {
+                    completionHandler(nil)
+                }
+            }
+        }
+    }
+
+    // ASYNC
+    // downloads record tracks json data
+    // when done, 
+    func fillTracksWithRemoteData(completionHandler: Void -> Void) {
+        let urlString = "http://core.mds-club.ru/api/v1.0/mds/records/\(id)/files/?access-token=" + Access.generateToken()
+
+        getRecordAudioDataTask?.cancel()
+        getRecordAudioDataTask = DataModel.getJsonByUrlString(urlString) { data in
+            self.extendTracksWithJsonData(data)
+            completionHandler()
+        }
+    }
+
 }

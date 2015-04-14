@@ -15,6 +15,12 @@ class SearchCatalog: UIViewController {
         static let recordCell = "RecordCell"
     }
     
+    // #MARK: - ivars
+    
+    var dataModel: DataModel?
+    var lastSearchQuery = ""
+    var searchResults = [Record]()
+    
     // #MARK: - IB outlets
 
     @IBOutlet weak var tableView: UITableView!
@@ -23,46 +29,41 @@ class SearchCatalog: UIViewController {
     // #MARK: - IB Actions
 
     @IBAction func playButtonClicked(sender: UIButton) {
+        assert(dataModel != nil)
+
         if let cellContent = sender.superview {
             if let cell = cellContent.superview as? UITableViewCell {
-                println("cell found")
+                // println("cell found")
                 if let indexPath = tableView.indexPathForCell(cell) {
-                    /* let record = searchResults[indexPath.row]
-                    println("record: \(record)")
-
-                    if record.sources == nil || record.sources!.isEmpty {
-                        throwErrorMessage("Отсутствуют ссылки на загрузку файла.", withHandler: nil, inViewController: self)
-                        return
+                    if let records = dataModel!.filteredRecords {
+                        let record = records[indexPath.row]
+                        println("record: \(record)")
+                        record.getFirstPlayableTrack() { track in
+                            if let track = track {
+                                println("got playable track: \(track)")
+                                println("url: \(track.url)")
+                            }
+                            else {
+                                println("there are nor tracks")
+                            }
+                        }
                     }
-
-                    let url = record.sources![1].url
-                    println("lets play \(url)")
-
-                    var error: NSError?
-                    var audioPlayer:AVAudioPlayer?
-                    audioPlayer = AVAudioPlayer(contentsOfURL: url,
-                        fileTypeHint: AVFileTypeMPEGLayer3,
-                        error: &error)
-
-                    if let error = error {
-                        println("error: \(error)")
-                        return
+                    else {
+                        // #FIXME: there are no records
                     }
-
-                    sender.enabled = false
-                    audioPlayer!.prepareToPlay()
-                    audioPlayer!.play() */
+                }
+                else {
+                    // #FIXME: indexPath for cell not found
                 }
             }
+            else {
+                // #FIXME: sender superview is not a cell
+            }
         }
-    }
-    
-    // #MARK: - ivars
-    
-    var dataModel: DataModel?
-    var lastSearchQuery = ""
-    var searchResults = [Record]()
-    
+        else {
+            // #FIXME: sender doesn't have superview
+        }
+    }    
     
     // #MARK: - UIViewController methods
 
@@ -76,16 +77,6 @@ class SearchCatalog: UIViewController {
 
         // ask dataModel to load records
         dataModel!.loadRecords()
-    }
-
-    // #MARK: - helpers
-
-    func getCatalogSearchUrlWithText(text: String) -> NSURL? {
-        let escapedText = text.stringByAddingPercentEscapesUsingEncoding(NSUTF8StringEncoding)!
-        let urlString = String(format: "http://bumagi.net/api/mds-catalog.php?q=%@", escapedText)        
-        let url = NSURL(string: urlString)
-
-        return url
     }
 
     // #MARK: - redraw
@@ -145,9 +136,11 @@ extension SearchCatalog: UITableViewDataSource {
 // #MARK: - UITableViewDelegate
 
 extension SearchCatalog: UITableViewDelegate {
-    // func tableView(tableView: UITableView, willSelectRowAtIndexPath indexPath: NSIndexPath) -> NSIndexPath? {
-    //     return indexPath
-    // }
+    func tableView(tableView: UITableView, willSelectRowAtIndexPath indexPath: NSIndexPath) -> NSIndexPath? {
+        searchBar.resignFirstResponder()
+
+        return nil
+    }
     
     /*func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
         let height: CGFloat = (searchQueryHasNoResults && indexPath.row == 0) ? 88 : 44

@@ -27,8 +27,10 @@ func throwErrorMessage(message: String, withHandler handler: (Void -> Void)?, in
 
     alert.addAction(action)
     viewCtlr.presentViewController(alert, animated: true, completion: nil) 
-
 }
+
+// do-nothing function
+func noop(_: AnyObject...) {}
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {

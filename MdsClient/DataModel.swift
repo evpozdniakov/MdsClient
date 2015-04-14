@@ -6,7 +6,7 @@ class DataModel: NSObject {
     var filteredRecords: [Record]?
 
     func fillRecordsWithJsonData(data: NSData) {
-        if let json = parseJsonData(data) {
+        if let json = Ajax.parseJsonArray(data) {
             allRecords = [Record]()
 
             for entry in json {
@@ -35,25 +35,9 @@ class DataModel: NSObject {
             // #FIXME: send success notification
             storeRecords()
         }
-    }
-
-    func parseJsonData(data: NSData) -> [AnyObject]? {
-        var error: NSError?
-        
-        if let json = NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions(0), error: &error) as? [AnyObject] {
-            return json
-        }
-        
-        if let error = error {
-            // Cocoa error 3840: JSON text did not start with array or object and option to allow fragments not set
-            println("data-model-error-1001: \(error)")
-        }
         else {
-            // Error: JSON could be parsed, but it can be casted to [AnyObject] format
-            println("data-model-error-1002")
+            // #FIXME: no json returned
         }
-
-        return nil
     }
 
     // will store records in local file DataModel.plist under key "AllRecords"
@@ -103,10 +87,54 @@ class DataModel: NSObject {
         }
     }
 
+    // will filter records with search string and put them into filteredRecords array
+    func filterRecordsWithText(searchString: String) {
+        let searchStringLowercase = searchString.lowercaseString
+
+        filteredRecords = [Record]()
+        for record in allRecords {
+            if record.title.lowercaseString.rangeOfString(searchStringLowercase) != nil ||
+                record.author.lowercaseString.rangeOfString(searchStringLowercase) != nil {
+                    filteredRecords!.append(record)
+            }
+        }
+    }
+
+    // #MARK: - get JSON
+
+    // ASYNC
+    // downloads all records json data
+    // when done, fills dataModel.records with data
+    func getRecordsJson() {
+        let urlString = "http://core.mds-club.ru/api/v1.0/mds/records/?access-token=" + Access.generateToken()
+
+        DataModel.getJsonByUrlString(urlString) { data in
+            self.fillRecordsWithJsonData(data)
+            // #FIXME: send global notification or perform callback
+        }
+    }
+
+    // generic get json with handler
+    class func getJsonByUrlString(urlString: String, success: (NSData) -> Void) -> NSURLSessionDataTask? {
+        if let url = NSURL(string:urlString) {
+            let dataTask = Ajax.get(url: url, success: success)
+
+            return dataTask
+        }
+        else {
+            // #FIXME: check url
+        }
+
+        return nil
+    }
+
+    // #MARK: - helpers
+
     // returns path to local file DataModel.plist
     func getDataFilePath() -> String? {
         if let documentsDir = documementsDirectory() {
             let filePath = documentsDir.stringByAppendingPathComponent("DataModel.plist")
+            println("filePath:\(filePath)")
             
             return filePath
         }
@@ -129,29 +157,4 @@ class DataModel: NSObject {
         return nil
     }
 
-    // initialize retreiving remote records json
-    func getRecordsJson() {
-        let token = Access.generateToken()
-        let urlString = "http://core.mds-club.ru/api/v1.0/mds/records/?access-token=" + token
-        let url = NSURL(string: urlString)
-
-        if let url = url {
-            Ajax.get(url: url) { data in
-                self.fillRecordsWithJsonData(data)
-            }
-        }
-    }
-
-    // 
-    func filterRecordsWithText(searchString: String) {
-        let searchStringLowercase = searchString.lowercaseString
-
-        filteredRecords = [Record]()
-        for record in allRecords {
-            if record.title.lowercaseString.rangeOfString(searchStringLowercase) != nil ||
-                record.author.lowercaseString.rangeOfString(searchStringLowercase) != nil {
-                    filteredRecords!.append(record)
-            }
-        }
-    }
 }
