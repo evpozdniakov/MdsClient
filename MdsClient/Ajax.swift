@@ -44,6 +44,22 @@ struct Ajax {
         return dataTask
     }
 
+    // #MARK: - get JSON
+
+    // generic get json with handler
+    static func getJsonByUrlString(urlString: String, success: (NSData) -> Void) -> NSURLSessionDataTask? {
+        if let url = NSURL(string:urlString) {
+            let dataTask = Ajax.get(url: url, success: success)
+
+            return dataTask
+        }
+        else {
+            // #FIXME: check url
+        }
+
+        return nil
+    }
+
     // parse json nsdata as array
     static func parseJsonArray(data: NSData) -> [AnyObject]? {
         var error: NSError?

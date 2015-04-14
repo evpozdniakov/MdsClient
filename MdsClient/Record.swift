@@ -3,6 +3,17 @@ import Foundation
 var getRecordAudioDataTask: NSURLSessionDataTask?
 
 class Record: NSObject, NSCoding {
+    /*
+        "id": 1332,
+        "createAt": "2012-04-08T18:28:27+04:00",
+        "editAt": "2012-04-08T18:28:27+04:00",
+        "author": "Сергей Цветков",
+        "name": "Посредник",
+        "readedAt": "2012-04-05T00:00:00+04:00",
+        "radioStation": "Пионер FM",
+        "following": 2 
+    */
+
     var id: Int
     var author: String
     var title: String
@@ -12,14 +23,7 @@ class Record: NSObject, NSCoding {
     var tracks: [Track]
     var hasNoTracks: Bool
 
-    // "id": 1332,
-    // "createAt": "2012-04-08T18:28:27+04:00",
-    // "editAt": "2012-04-08T18:28:27+04:00",
-    // "author": "Сергей Цветков",
-    // "name": "Посредник",
-    // "readedAt": "2012-04-05T00:00:00+04:00",
-    // "radioStation": "Пионер FM",
-    // "following": 2
+    // #MARK: - initializers
     
     init(id: Int, author: String, title: String, readDate: NSDate?, year: String, station: String, tracks: [Track], hasNoTracks: Bool) {
         self.id = id
@@ -74,66 +78,19 @@ class Record: NSObject, NSCoding {
         aCoder.encodeBool(hasNoTracks, forKey: "HasNoTracks")
     }
 
-    func extendTracksWithJsonData(data: NSData) {
-        if let json = Ajax.parseJsonArray(data) {
-            var tracks = [Track]()
-
-            for entry in json {
-                if let entry = entry as? [String: AnyObject] {
-
-                    // id = 12772;
-                    // bitrate = 168kbps;
-                    // channels = Stereo;
-                    // mode = VBR;
-                    // size = 11141120;
-                    // url = "http://mds.mds-club.ru/Kir_Bulychev_-_Oni_uzhe_zdes'!.mp3";
-
-                    if let id = entry["id"] as? Int,
-                        let bitrate = entry["bitrate"] as? String,
-                        let channels = entry["channels"] as? String,
-                        let mode = entry["mode"] as? String,
-                        let size = entry["size"] as? Int,
-                        let urlString = entry["url"] as? String {
-                            if let url = NSURL(string:urlString) {
-                                let track = Track(id: id, bitrate: bitrate, channels: channels, mode: mode, size: size, url: url)
-                                tracks.append(track)
-                            }
-                            else {
-                                // #FIXME: problem with creaing url
-                            }
-                    }
-                    else {
-                        // #FIXME: unable to parse json entry
-                    }
-                }
-                else {
-                    // #FIXME: unable to parse json
-                }
-            }
-
-            if tracks.count > 0 {
-                self.tracks = tracks
-            }
-            else {
-                // #FIXME: why?
-            }
-        }
-        else {
-            // #FIXME: no json returned
-        }
-    }
+    // #MARK: - work with tracks
 
     // if the record has tracks, returns first playable record
     // otherwise initializes tracks json downloading/parsing
     func getFirstPlayableTrack(completionHandler: (Track?) -> Void) {
-        if tracks.count > 0 {
-            completionHandler(tracks[0])
-        }
-        else if hasNoTracks {
+        if hasNoTracks {
             completionHandler(nil)
         }
+        else if tracks.count > 0 {
+            completionHandler(tracks[0])
+        }
         else {
-            fillTracksWithRemoteData() {
+            downloadAndParseTracksJson() {
                 if self.tracks.count > 0 {
                     completionHandler(self.tracks[0])
                 }
@@ -144,15 +101,66 @@ class Record: NSObject, NSCoding {
         }
     }
 
+    // will parse json and fill tracks
+    func fillTracksWithJson(json: [AnyObject]) {
+        var tracks = [Track]()
+
+        for entry in json {
+            if let entry = entry as? [String: AnyObject] {
+
+                // id = 12772;
+                // bitrate = 168kbps;
+                // channels = Stereo;
+                // mode = VBR;
+                // size = 11141120;
+                // url = "http://mds.mds-club.ru/Kir_Bulychev_-_Oni_uzhe_zdes'!.mp3";
+
+                if let id = entry["id"] as? Int,
+                    let bitrate = entry["bitrate"] as? String,
+                    let channels = entry["channels"] as? String,
+                    let mode = entry["mode"] as? String,
+                    let size = entry["size"] as? Int,
+                    let urlString = entry["url"] as? String {
+                        if let url = NSURL(string:urlString) {
+                            let track = Track(id: id, bitrate: bitrate, channels: channels, mode: mode, size: size, url: url)
+                            tracks.append(track)
+                        }
+                        else {
+                            // #FIXME: problem with creaing url
+                        }
+                }
+                else {
+                    // #FIXME: unable to parse json entry
+                }
+            }
+            else {
+                // #FIXME: unable to parse json
+            }
+        }
+
+        if tracks.count > 0 {
+            self.tracks = tracks
+        }
+        else {
+            hasNoTracks = true
+        }
+    }
+
     // ASYNC
     // downloads record tracks json data
     // when done, 
-    func fillTracksWithRemoteData(completionHandler: Void -> Void) {
+    func downloadAndParseTracksJson(completionHandler: Void -> Void) {
         let urlString = "http://core.mds-club.ru/api/v1.0/mds/records/\(id)/files/?access-token=" + Access.generateToken()
 
         getRecordAudioDataTask?.cancel()
-        getRecordAudioDataTask = DataModel.getJsonByUrlString(urlString) { data in
-            self.extendTracksWithJsonData(data)
+        getRecordAudioDataTask = Ajax.getJsonByUrlString(urlString) { data in
+            if let json = Ajax.parseJsonArray(data) {
+                self.fillTracksWithJson(json)
+            }
+            else {
+                self.hasNoTracks = true
+            }
+
             completionHandler()
         }
     }

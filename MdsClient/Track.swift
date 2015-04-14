@@ -9,14 +9,14 @@
 import Foundation
 
 class Track: NSObject, NSCoding {
-	/* {
-	    bitrate = 168kbps;
+	/*  
+		bitrate = 168kbps;
 	    channels = Stereo;
 	    id = 12772;
 	    mode = VBR;
 	    size = 11141120;
 	    url = "http://mds.mds-club.ru/Kir_Bulychev_-_Oni_uzhe_zdes'!.mp3";
-	} */
+	*/
 
 	var id: Int
 	var bitrate: String
@@ -54,13 +54,3 @@ class Track: NSObject, NSCoding {
         aCoder.encodeObject(url, forKey: "Url")
     }
 }
-
-/* struct RecordSource {
-    var domain: String
-    var url: NSURL
-    
-    init(domain: String, url: NSURL) {
-        self.domain = domain
-        self.url = url
-    }
-} */

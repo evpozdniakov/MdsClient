@@ -157,7 +157,7 @@ extension SearchCatalog: UISearchBarDelegate {
         assert(dataModel != nil)
         // println("search button clicked, search string: '\(searchBar.text)'")
         searchBar.resignFirstResponder()
-        dataModel!.filterRecordsWithText(searchBar.text)
+        dataModel!.filterRecordsWhichContainText(searchBar.text)
         tableView.reloadData()
     }
 
