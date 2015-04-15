@@ -54,18 +54,18 @@ struct Ajax {
     // #MARK: - get JSON
 
     /**
-    Shorthand for Ajax.get(), but it proceeds only if was able to create url from string passed.
+        Shorthand for Ajax.get(), but it proceeds only if was able to create url from string passed.
 
-    **Warning:** The fail handler not implemented.
+        **Warning:** The fail handler not implemented.
 
-    Usage:
+        Usage:
 
-        Ajax.getJsonByUrlString("http://bumagi.net/ios/mds/?q=abc")
+            Ajax.getJsonByUrlString("http://bumagi.net/ios/mds/?q=abc")
 
-    :param: urlString
-    :param: success The success handler.
+        :param: urlString
+        :param: success The success handler.
 
-    :returns: NSURLSessionDataTask?
+        :returns: NSURLSessionDataTask?
     */
     static func getJsonByUrlString(urlString: String, success: (NSData) -> Void) -> NSURLSessionDataTask? {
         if let url = NSURL(string:urlString) {
@@ -81,17 +81,17 @@ struct Ajax {
     }
 
     /**
-    Transforms json passed in nsdata format into [AnyObject] array.
+        Transforms json passed in nsdata format into [AnyObject] array.
 
-    **Warning:** The errors not handled.
+        **Warning:** The errors not handled.
 
-    Usage:
+        Usage:
 
-        Ajax.parseJsonArray(data)
+            Ajax.parseJsonArray(data)
 
-    :param: data JSON in NSData format.
+        :param: data JSON in NSData format.
 
-    :returns: optional array [AnyObject].
+        :returns: optional array [AnyObject].
     */
     static func parseJsonArray(data: NSData) -> [AnyObject]? {
         var error: NSError?
@@ -115,17 +115,17 @@ struct Ajax {
     }
 
     /**
-    Transforms json passed in nsdata format into [String: AnyObject] dictionary.
+        Transforms json passed in nsdata format into [String: AnyObject] dictionary.
 
-    **Warning:** The errors not handled.
+        **Warning:** The errors not handled.
 
-    Usage:
+        Usage:
 
-        Ajax.parseJsonDictionary(data)
+            Ajax.parseJsonDictionary(data)
 
-    :param: data JSON in NSData format
+        :param: data JSON in NSData format
 
-    :returns: [String: AnyObject]?
+        :returns: [String: AnyObject]?
     */
     static func parseJsonDictionary(data: NSData) -> [String: AnyObject]? {
         var error: NSError?
