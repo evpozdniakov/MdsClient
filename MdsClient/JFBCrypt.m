@@ -470,7 +470,7 @@ signed char index_64[] = {
     SInt32 off = 0;
     SInt32 slen = (SInt32) [s length];
     SInt32 olen = 0;
-    NSMutableData *ret = nil;
+    NSData *ret = nil;
     signed char c1, c2, c3, c4, o;
     
     if (maxolen <= 0) {
@@ -514,7 +514,7 @@ signed char index_64[] = {
     for (off = 0; off < olen; off++) {
         ret2[off] = (signed char) [rs characterAtIndex: off];
     }
-    
+
     ret = [NSData dataWithBytes: ret2 length: olen];
     JFFree(ret2);
     
@@ -836,7 +836,7 @@ signed char index_64[] = {
         [hashedPassword appendString: @"0"];
     }
     
-    [hashedPassword appendFormat: @"%d", rounds];
+    [hashedPassword appendFormat: @"%d", (int)rounds];
     [hashedPassword appendString: @"$"];
     [hashedPassword appendString: [JFBCrypt encodeData: saltData
                                               ofLength: [saltData length]]];
@@ -867,7 +867,7 @@ signed char index_64[] = {
         [salt appendString: @"0"];
     }
     
-    [salt appendFormat: @"%d", numberOfRounds];
+    [salt appendFormat: @"%d", (int)numberOfRounds];
     [salt appendString: @"$"];
     [salt appendString: [JFBCrypt encodeData: randomData
                                     ofLength: [randomData length]]];

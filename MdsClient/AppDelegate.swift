@@ -8,10 +8,17 @@
 
 import UIKit
 
-func throwErrorMessage(message: String, withHandler handler: (Void -> Void)?, inViewController viewCtlr: UIViewController) {
+/**
+    Displays error message
+
+    Usage:
+
+        throwErrorMessage("Message text", withHandler: nil, inViewController: self)
+*/
+func throwErrorMessage(message: String, inViewController viewCtlr: UIViewController, withHandler handler: (Void -> Void)?) {
     let alert = UIAlertController(
-        title: "Ошибка!", 
-        message: message, 
+        title: "Ошибка!",
+        message: message,
         preferredStyle: .Alert
     )
 
@@ -26,7 +33,7 @@ func throwErrorMessage(message: String, withHandler handler: (Void -> Void)?, in
     )
 
     alert.addAction(action)
-    viewCtlr.presentViewController(alert, animated: true, completion: nil) 
+    viewCtlr.presentViewController(alert, animated: true, completion: nil)
 }
 
 // do-nothing function
@@ -42,7 +49,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
         // Override point for customization after application launch.
         dataModel = DataModel()
-        
+
         if let window = window {
             if let tabCtlr = window.rootViewController as? UITabBarController {
                 if let viewControllers = tabCtlr.viewControllers {
@@ -52,7 +59,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 }
             }
         }
-        
+
         return true
     }
 

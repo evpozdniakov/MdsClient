@@ -4,6 +4,17 @@ class DataModel: NSObject {
 
     var allRecords = [Record]()
     var filteredRecords: [Record]?
+    var playingRecord: Record?
+    // #FIXME: replace by get { find index by record}
+    var playingRecordIndex: Int? {
+        if let records = self.filteredRecords,
+            playingRecord = self.playingRecord {
+
+            return find(records, playingRecord)
+        }
+
+        return nil
+    }
 
     // will filter records with search string and put them into filteredRecords array
     func filterRecordsWhichContainText(searchString: String) {
@@ -24,14 +35,16 @@ class DataModel: NSObject {
     // downloads all records json data
     // when done, fills dataModel.records with data
     func downloadAllRecordsJson() {
-        let urlString = "http://core.mds-club.ru/api/v1.0/mds/records/?access-token=" + Access.generateToken()
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
+            let urlString = "http://core.mds-club.ru/api/v1.0/mds/records/?access-token=" + Access.generateToken()
 
-        Ajax.getJsonByUrlString(urlString) { data in
-            if let json = Ajax.parseJsonArray(data) {
-                self.fillRecordsWithJson(json)
-            }
-            else {
-                // #FIXME: no json returned
+            Ajax.getJsonByUrlString(urlString) { data in
+                if let json = Ajax.parseJsonArray(data) {
+                    self.fillRecordsWithJson(json)
+                }
+                else {
+                    // #FIXME: no json returned
+                }
             }
         }
     }
@@ -88,7 +101,7 @@ class DataModel: NSObject {
         }
     }
 
-    // will load records either from local file DataModel.plist or will initialize 
+    // will load records either from local file DataModel.plist or will initialize
     func loadRecords() {
         if let filePath = getDataFilePath() {
             if NSFileManager.defaultManager().fileExistsAtPath(filePath) {
@@ -122,16 +135,16 @@ class DataModel: NSObject {
         if let documentsDir = documementsDirectory() {
             let filePath = documentsDir.stringByAppendingPathComponent("DataModel.plist")
             println("filePath:\(filePath)")
-            
+
             return filePath
         }
         else {
             // #FIXME: documementsDirectory() didn't return path to directory
         }
-        
+
         return nil
     }
-    
+
     // returns path to documents directory as String
     func documementsDirectory() -> String? {
         if let paths = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true) as? [String] {
@@ -140,7 +153,7 @@ class DataModel: NSObject {
         else {
             // #FIXME: NSSearchPathForDirectoriesInDomains() didn't return paths arrray
         }
-        
+
         return nil
     }
 

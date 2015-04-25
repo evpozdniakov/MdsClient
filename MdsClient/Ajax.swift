@@ -8,7 +8,9 @@ struct Ajax {
 
         Usage:
 
-            Ajax.get(url) { data in <some code> }
+            Ajax.get(url: url, success: completionHandler)
+            or
+            Ajax.get(url: url) { data in <some code> }
 
         :param: url The url to send http request.
         :param: success The handler to perform (with response data as parameter) if server returns status 200.
@@ -35,14 +37,14 @@ struct Ajax {
                 println("ajax-error-no-response")
                 return
             }
-            
+
             if httpResponse!.statusCode != 200 {
                 // erver response code != 200
                 // #FIXME: add optional faill handler and call it with error
                 println("ajax-error-unexpected-response-code: \(httpResponse!.statusCode)")
                 return
             }
-            
+
             success(data: data)
         }
 
@@ -95,11 +97,11 @@ struct Ajax {
     */
     static func parseJsonArray(data: NSData) -> [AnyObject]? {
         var error: NSError?
-        
+
         if let json = NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions(0), error: &error) as? [AnyObject] {
             return json
         }
-        
+
         if let error = error {
             // Cocoa error 3840: JSON text did not start with array or object and option to allow fragments not set
             // #FIXME: handle the error
@@ -129,11 +131,11 @@ struct Ajax {
     */
     static func parseJsonDictionary(data: NSData) -> [String: AnyObject]? {
         var error: NSError?
-        
+
         if let json = NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions(0), error: &error) as? [String: AnyObject] {
             return json
         }
-        
+
         if let error = error {
             // Cocoa error 3840: JSON text did not start with array or object and option to allow fragments not set
             // #FIXME: handle the error
