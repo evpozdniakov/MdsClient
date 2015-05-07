@@ -14,6 +14,7 @@
 		9A5080281AD9E70B00D15586 /* DataModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A5080271AD9E70B00D15586 /* DataModel.swift */; };
 		9A50802A1ADC89E100D15586 /* Track.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A5080291ADC89E100D15586 /* Track.swift */; };
 		9A50802C1ADE056200D15586 /* RemoteMp3Player.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A50802B1ADE056200D15586 /* RemoteMp3Player.swift */; };
+		9AA9E7AE1AF307CE00AE5B6B /* Playlist.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AA9E7AD1AF307CE00AE5B6B /* Playlist.swift */; };
 		9AEB58B41AB6318100BF103F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AEB58B31AB6318100BF103F /* AppDelegate.swift */; };
 		9AEB58B61AB6318100BF103F /* SearchCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AEB58B51AB6318100BF103F /* SearchCatalog.swift */; };
 		9AEB58B91AB6318100BF103F /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 9AEB58B71AB6318100BF103F /* Main.storyboard */; };
@@ -45,6 +46,7 @@
 		9A5080271AD9E70B00D15586 /* DataModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DataModel.swift; sourceTree = "<group>"; };
 		9A5080291ADC89E100D15586 /* Track.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Track.swift; sourceTree = "<group>"; };
 		9A50802B1ADE056200D15586 /* RemoteMp3Player.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RemoteMp3Player.swift; sourceTree = "<group>"; };
+		9AA9E7AD1AF307CE00AE5B6B /* Playlist.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Playlist.swift; sourceTree = "<group>"; };
 		9AEB58AE1AB6318100BF103F /* MdsClient.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MdsClient.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9AEB58B21AB6318100BF103F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		9AEB58B31AB6318100BF103F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -116,6 +118,7 @@
 				9A5080251AD9BEA300D15586 /* Ajax.swift */,
 				9A5080271AD9E70B00D15586 /* DataModel.swift */,
 				9AEB58B71AB6318100BF103F /* Main.storyboard */,
+				9AA9E7AD1AF307CE00AE5B6B /* Playlist.swift */,
 				9AEB58D31AB9241100BF103F /* Record.swift */,
 				9A50802B1ADE056200D15586 /* RemoteMp3Player.swift */,
 				9AEB58B51AB6318100BF103F /* SearchCatalog.swift */,
@@ -265,6 +268,7 @@
 				9A50802C1ADE056200D15586 /* RemoteMp3Player.swift in Sources */,
 				9A50802A1ADC89E100D15586 /* Track.swift in Sources */,
 				9A5080281AD9E70B00D15586 /* DataModel.swift in Sources */,
+				9AA9E7AE1AF307CE00AE5B6B /* Playlist.swift in Sources */,
 				9AEB58D41AB9241100BF103F /* Record.swift in Sources */,
 				9A50801B1AD99EFD00D15586 /* Access.swift in Sources */,
 			);

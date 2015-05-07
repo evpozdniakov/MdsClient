@@ -1,4 +1,17 @@
-struct Ajax {
+//
+//  Ajax.swift
+//
+//  Created by Evgeniy Pozdnyakov on 2015-04-25.
+//  Copyright (c) 2015 Evgeniy Pozdnyakov. All rights reserved.
+//
+
+import Foundation
+
+class Ajax: NSObject {
+    var downloadTask: NSURLSessionDownloadTask?
+    var localURL: NSURL?
+    var progressHandler: ((Int64, Int64) -> Void)?
+    var completionHandler: (Void -> Void)?
 
     /**
         Creates NSURLSessionDataTask which sends http get request to url
@@ -8,18 +21,20 @@ struct Ajax {
 
         Usage:
 
-            Ajax.get(url: url, success: completionHandler)
-            or
-            Ajax.get(url: url) { data in <some code> }
+        Ajax.get(url: url, success: completionHandler)
+        or
+        Ajax.get(url: url) { data in <some code> }
 
         :param: url The url to send http request.
         :param: success The handler to perform (with response data as parameter) if server returns status 200.
 
         :returns: NSURLSessionDataTask
     */
-    static func get(#url: NSURL, success: (data: NSData) -> ()) -> NSURLSessionDataTask {
+    static func get(#url: NSURL, success: (data: NSData) -> (), fail: (Void -> Void)?) -> NSURLSessionDataTask {
+        println("call Ajax.get() with url: \(url)")
         let session = NSURLSession.sharedSession()
-        let dataTask = session.dataTaskWithURL(url) {data, response, error in
+        let dataTask = session.dataTaskWithURL(url) { data, response, error in
+            println("Ajax.get callback for url: \(url)")
             if let error = error {
                 if error.code == -999 { return } // task cancelled
 
@@ -35,6 +50,11 @@ struct Ajax {
                 // Server didn't return any response
                 // #FIXME: add optional faill handler and call it with error
                 println("ajax-error-no-response")
+
+                if let fail = fail {
+                    fail()
+                }
+
                 return
             }
 
@@ -42,6 +62,11 @@ struct Ajax {
                 // erver response code != 200
                 // #FIXME: add optional faill handler and call it with error
                 println("ajax-error-unexpected-response-code: \(httpResponse!.statusCode)")
+
+                if let fail = fail {
+                    fail()
+                }
+
                 return
             }
 
@@ -53,8 +78,6 @@ struct Ajax {
         return dataTask
     }
 
-    // #MARK: - get JSON
-
     /**
         Shorthand for Ajax.get(), but it proceeds only if was able to create url from string passed.
 
@@ -62,16 +85,25 @@ struct Ajax {
 
         Usage:
 
-            Ajax.getJsonByUrlString("http://bumagi.net/ios/mds/?q=abc")
+        Ajax.getJsonByUrlString("http://bumagi.net/ios/mds/?q=abc",
+                                success: { data in
+                                    // success handler
+                                },
+                                fail: {
+                                    // fail handler
+                                })
 
         :param: urlString
         :param: success The success handler.
 
         :returns: NSURLSessionDataTask?
     */
-    static func getJsonByUrlString(urlString: String, success: (NSData) -> Void) -> NSURLSessionDataTask? {
+    static func getJsonByUrlString(urlString: String, success: (NSData) -> Void, fail: (Void -> Void)?) -> NSURLSessionDataTask? {
+        println("call getJsonByUrlString with urlString: \(urlString)")
         if let url = NSURL(string:urlString) {
-            let dataTask = Ajax.get(url: url, success: success)
+            println("url is correct")
+
+            let dataTask = Ajax.get(url: url, success: success, fail: fail)
 
             return dataTask
         }
@@ -89,7 +121,7 @@ struct Ajax {
 
         Usage:
 
-            Ajax.parseJsonArray(data)
+        Ajax.parseJsonArray(data)
 
         :param: data JSON in NSData format.
 
@@ -123,7 +155,7 @@ struct Ajax {
 
         Usage:
 
-            Ajax.parseJsonDictionary(data)
+        Ajax.parseJsonDictionary(data)
 
         :param: data JSON in NSData format
 
@@ -148,5 +180,87 @@ struct Ajax {
         }
 
         return nil
+    }
+
+    /**
+        Will download file from remote and save it locally.
+        It will call progress handler periodically while downloading.
+        It will call completion handler once when download complete.
+
+        **Warning:** Works asyncronously.
+
+        Usage:
+
+            Ajax.downloadFileFromUrl(remoteURL, saveTo: localURL, reportingProgress: progressHandler) {
+                // completion handler code
+            }
+
+        :param: remoteURL: NSURL
+        :param: saveTo: NSURL
+        :param: reportingProgress: (Int64, Int64) -> Void
+        :param: reportingCompletion: Void -> Void
+
+        :returns: NSURLSessionDownloadTask
+    */
+    static func downloadFileFromUrl(remoteURL: NSURL, saveTo localURL: NSURL, reportingProgress progressHandler: (Int64, Int64) -> Void, reportingCompletion completionHandler: Void->Void) -> NSURLSessionDownloadTask {
+        println("call downloadFileFromUrl(), url: \(remoteURL), save to: \(localURL)")
+        let ajax = Ajax()
+        let configuration = NSURLSessionConfiguration.defaultSessionConfiguration()
+        let session = NSURLSession(configuration: configuration, delegate: ajax, delegateQueue: nil)
+        let downloadTask = session.downloadTaskWithURL(remoteURL)
+
+        ajax.downloadTask = downloadTask
+        ajax.localURL = localURL
+        ajax.progressHandler = progressHandler
+        ajax.completionHandler = completionHandler
+
+        downloadTask.resume()
+        println("task \(downloadTask) resumed")
+
+        return downloadTask
+    }
+}
+
+extension Ajax: NSURLSessionDownloadDelegate {
+    func URLSession(session: NSURLSession, downloadTask: NSURLSessionDownloadTask, didFinishDownloadingToURL location: NSURL) {
+        assert(localURL != nil)
+        assert(self.downloadTask != nil)
+        assert(completionHandler != nil)
+
+        println("file saved at \(location)")
+
+        if downloadTask == self.downloadTask {
+            let fileManager = NSFileManager.defaultManager()
+            var error: NSError?
+
+            fileManager.moveItemAtURL(location, toURL: localURL!, error: &error)
+
+            if let error = error {
+                // #FIXME: handle the error
+                println("error moving file: \(error)")
+            }
+
+            if let completionHandler = completionHandler {
+                completionHandler()
+            }
+        }
+    }
+
+    func URLSession(session: NSURLSession, downloadTask: NSURLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
+        assert(progressHandler != nil)
+        assert(self.downloadTask != nil)
+
+        if downloadTask == self.downloadTask {
+            if let progressHandler = progressHandler {
+                progressHandler(totalBytesWritten, totalBytesExpectedToWrite)
+            }
+        }
+    }
+
+    func URLSession(session: NSURLSession, task: NSURLSessionTask, didCompleteWithError error: NSError?) {
+        println("-----------------------------------------------------")
+        if let error = error {
+            println("error [\(error)] while downloading")
+        }
     }
 }

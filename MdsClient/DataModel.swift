@@ -3,14 +3,15 @@ import Foundation
 class DataModel: NSObject {
 
     var allRecords = [Record]()
-    var filteredRecords: [Record]?
+    var filteredRecords = [Record]()
+    var playlist = [Record]()
     var playingRecord: Record?
+
     // #FIXME: replace by get { find index by record}
     var playingRecordIndex: Int? {
-        if let records = self.filteredRecords,
-            playingRecord = self.playingRecord {
+        if let playingRecord = self.playingRecord {
 
-            return find(records, playingRecord)
+            return find(filteredRecords, playingRecord)
         }
 
         return nil
@@ -24,7 +25,7 @@ class DataModel: NSObject {
         for record in allRecords {
             if record.title.lowercaseString.rangeOfString(searchStringLowercase) != nil ||
                 record.author.lowercaseString.rangeOfString(searchStringLowercase) != nil {
-                    filteredRecords!.append(record)
+                    filteredRecords.append(record)
             }
         }
     }
@@ -38,14 +39,16 @@ class DataModel: NSObject {
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
             let urlString = "http://core.mds-club.ru/api/v1.0/mds/records/?access-token=" + Access.generateToken()
 
-            Ajax.getJsonByUrlString(urlString) { data in
-                if let json = Ajax.parseJsonArray(data) {
-                    self.fillRecordsWithJson(json)
-                }
-                else {
-                    // #FIXME: no json returned
-                }
-            }
+            Ajax.getJsonByUrlString(urlString,
+                                    success: { data in
+                                        if let json = Ajax.parseJsonArray(data) {
+                                            self.fillRecordsWithJson(json)
+                                        }
+                                        else {
+                                            // #FIXME: no json returned
+                                        }
+                                    },
+                                    fail: nil)
         }
     }
 
@@ -128,6 +131,61 @@ class DataModel: NSObject {
             // #FIXME: getDataFilePath() didn't return path to file
         }
     }
+
+    // #MARK: - playlist
+
+    /**
+        Returns true if record sent as parameter is in playlist. False otherwise.
+
+        Usage:
+
+            playlistContainsRecord(record)
+
+        :param: Record
+
+        :returns: Bool
+    */
+    func playlistContainsRecord(record: Record) -> Bool {
+        if let index = find(playlist, record) {
+            return true
+        }
+
+        return false
+    }
+
+    /**
+        Removes passed record from playlist array then asks record to cancel downloading.
+
+        Usage:
+
+            playlistRemoveRecord(record)
+
+        :param: Record
+    */
+    func playlistRemoveRecord(record: Record) {
+        if let index = find(playlist, record) {
+            playlist.removeAtIndex(index)
+            record.cancelDownloading()
+        }
+        else {
+            // #FIXME: it should never happen, but what if it does?
+        }
+    }
+
+    /**
+        Adds passed record to playlist array then asks record to start downloading.
+
+        Usage:
+
+            playlistAddRecord(record)
+
+        :param: Record
+    */
+    func playlistAddRecord(record: Record) {
+        playlist.append(record)
+        record.startDownloading()
+    }
+
     // #MARK: - helpers
 
     // returns path to local file DataModel.plist
@@ -156,5 +214,4 @@ class DataModel: NSObject {
 
         return nil
     }
-
 }

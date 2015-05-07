@@ -1,0 +1,869 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"deque",
+				"dispatch_get_main_queue"
+			],
+			[
+				"threa",
+				"currentThread"
+			],
+			[
+				"remo",
+				"RemoteMp3PlayerDelegate"
+			],
+			[
+				"playbac",
+				"playbackStatus"
+			],
+			[
+				"indexpat",
+				"indexPathForCell"
+			],
+			[
+				"red",
+				"reloadData"
+			],
+			[
+				"play",
+				"playingRecord"
+			],
+			[
+				"reco",
+				"recordIndex"
+			],
+			[
+				"isPl",
+				"IsPlaying"
+			],
+			[
+				"redraw",
+				"redrawControls"
+			],
+			[
+				"urlS",
+				"urlStrings"
+			],
+			[
+				"curre",
+				"currentMp3Index"
+			],
+			[
+				"mp3url",
+				"mp3UrlCtrl"
+			],
+			[
+				"thro",
+				"throwErrorWithCode"
+			],
+			[
+				"pla",
+				"playBtn"
+			],
+			[
+				"throw",
+				"throwErrorWithCode"
+			],
+			[
+				"theo",
+				"throwErrorWithCode"
+			],
+			[
+				"pl",
+				"player"
+			],
+			[
+				"trac",
+				"trackDurationMls"
+			],
+			[
+				"trck",
+				"trackDurationMls"
+			],
+			[
+				"trackdur",
+				"trackDurationMls"
+			],
+			[
+				"tr",
+				"trackDurationMls"
+			],
+			[
+				"trackdu",
+				"trackDuration"
+			],
+			[
+				"track",
+				"trackDurationMls"
+			],
+			[
+				"curr",
+				"currentTime"
+			],
+			[
+				"Und",
+				"UnexpectedStatusOnResume"
+			],
+			[
+				"report",
+				"reportCurrentTimeTimer"
+			],
+			[
+				"Pause",
+				"PausedAtIsNil"
+			],
+			[
+				"Un",
+				"UnexpectedStatusOnStart"
+			],
+			[
+				"remot",
+				"RemoteMp3Player"
+			],
+			[
+				"throwerr",
+				"throwErrorWithCode"
+			],
+			[
+				"white",
+				"whiteCountRightSide"
+			],
+			[
+				"whit",
+				"whiteCountLeftSide"
+			],
+			[
+				"whi",
+				"whiteCountRightSide"
+			],
+			[
+				"blac",
+				"blackCountIndexes"
+			],
+			[
+				"xco",
+				"xCountInLeftPart"
+			],
+			[
+				"xC",
+				"xCountInLeftPart"
+			],
+			[
+				"arra",
+				"arrayIncrements"
+			],
+			[
+				"parse",
+				"parseJsonData"
+			],
+			[
+				"and",
+				"andCompletionHandler"
+			],
+			[
+				"comple",
+				"completionHandler"
+			],
+			[
+				"NSURLSe",
+				"NSURLSessionDataTask"
+			],
+			[
+				"cry",
+				"cryptedTokenHex"
+			],
+			[
+				"seek",
+				"seekToTimeCallback"
+			],
+			[
+				"seconds",
+				"CMTimeGetSeconds"
+			],
+			[
+				"get",
+				"CMTimeGetSeconds"
+			],
+			[
+				"redra",
+				"redrawTimeSliderTimer"
+			],
+			[
+				"timeSl",
+				"timeSliderValue"
+			],
+			[
+				"AVPla",
+				"AVPlayerItem"
+			],
+			[
+				"control",
+				"redrawPlaybackControls"
+			],
+			[
+				"Seeking",
+				"SeekingWhilePaused"
+			],
+			[
+				"Seek",
+				"SeekingWhilePlaying"
+			],
+			[
+				"pa",
+				"pausedAt"
+			],
+			[
+				"status",
+				"playerStatus"
+			],
+			[
+				"AVPl",
+				"AVPlayerItem"
+			],
+			[
+				"recor",
+				"recordSources"
+			],
+			[
+				"Rec",
+				"RecordSource"
+			],
+			[
+				"UITabl",
+				"UITableViewCell"
+			],
+			[
+				"NSURLS",
+				"NSURLSessionDataTask"
+			],
+			[
+				"reload",
+				"reloadTableInMainThread"
+			],
+			[
+				"inproce",
+				"catalogSearchInProcess"
+			],
+			[
+				"getcatal",
+				"getCatalogSearchDataTaskWithUrl"
+			],
+			[
+				"confi",
+				"configureDate"
+			],
+			[
+				"congi",
+				"configureCategoryWithName"
+			],
+			[
+				"config",
+				"configureCategoryWithName"
+			],
+			[
+				"CL",
+				"CLLocationDegrees"
+			],
+			[
+				"UIT",
+				"UITableViewCell"
+			],
+			[
+				"ne",
+				"nextStepCells"
+			],
+			[
+				"gener",
+				"generateBtn"
+			],
+			[
+				"stopG",
+				"stopGenerate"
+			],
+			[
+				"stop",
+				"stopGenerateLoop"
+			],
+			[
+				"lbr",
+				"lbrSize"
+			],
+			[
+				"barPo",
+				"barPos2"
+			],
+			[
+				"cell",
+				"cellVal2"
+			],
+			[
+				"po",
+				"pow2op"
+			],
+			[
+				"lbrGene",
+				"lbrGenerate"
+			],
+			[
+				"place",
+				"placemark"
+			],
+			[
+				"islookad",
+				"isLookingForAddress"
+			],
+			[
+				"time",
+				"timeIntervalSinceDate"
+			],
+			[
+				"isLoo",
+				"isContinueLookingForLocationGranted"
+			],
+			[
+				"ACCUR",
+				"SECONDS_WAIT_FOR_ACCURACY_IMPROVEMENT"
+			],
+			[
+				"start",
+				"startLookingForLocation"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"settings":
+			{
+				"buffer_size": 0,
+				"line_ending": "Unix"
+			}
+		}
+	],
+	"build_system": "",
+	"build_system_choices":
+	[
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 247.0,
+		"last_filter": "trail",
+		"selected_items":
+		[
+			[
+				"trail",
+				"Trailing Spaces: Toggle Trailing Spaces Highlighting"
+			],
+			[
+				"tra",
+				"Trailing Spaces: Delete Trailing Spaces"
+			],
+			[
+				"install",
+				"Package Control: Install Package"
+			],
+			[
+				"theme",
+				"Colorsublime: Install Theme"
+			],
+			[
+				"Snippet: fixme",
+				"Snippet: fixme.swift"
+			],
+			[
+				"pretty",
+				"Pretty JSON: Format (Pretty Print) JSON"
+			],
+			[
+				"colors",
+				"Colorsublime: Install Theme"
+			],
+			[
+				"remove",
+				"Package Control: Remove Package"
+			],
+			[
+				"color picker",
+				"Color Picker"
+			],
+			[
+				"removepa",
+				"Package Control: Remove Package"
+			],
+			[
+				"package",
+				"Package Control: Install Package"
+			],
+			[
+				"brows",
+				"Preferences: Browse Packages"
+			],
+			[
+				"package control install",
+				"Package Control: Install Package"
+			],
+			[
+				"add pack",
+				"Package Control: Advanced Install Package"
+			]
+		],
+		"width": 476.0
+	},
+	"console":
+	{
+		"height": 139.0,
+		"history":
+		[
+			"import urllib.request,os,hashlib; h = 'eb2297e1a458f27d836c04bb0cbaf282' + 'd0e7a3098092775ccb37ca9d6b2e4b7d'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://packagecontrol.io/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by)"
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"expanded_folders":
+	[
+		"/Users/evp/Documents/iOS/MdsClient"
+	],
+	"file_history":
+	[
+		"/Users/evp/Documents/iOS/DownloadWithProgress/DownloadWithProgress/Ajax.swift",
+		"/Users/evp/Documents/iOS/DownloadWithProgress/DownloadWithProgress/ViewController.swift",
+		"/Users/evp/Google Drive/iOS/FAQ.txt",
+		"/Users/evp/Documents/iOS/Playlist/Playlist/AllItemsController.swift",
+		"/Users/evp/Library/Application Support/Sublime Text 3/Packages/User/trailing_spaces.sublime-settings",
+		"/Users/evp/Documents/iOS/Playlist/Playlist/AppDelegate.swift",
+		"/Users/evp/Documents/iOS/Playlist/Playlist/DataModel.swift",
+		"/Users/evp/Documents/iOS/Playlist/Playlist/PlaylistController.swift",
+		"/Users/evp/Library/Application Support/Sublime Text 3/Packages/TrailingSpaces/trailing_spaces.sublime-settings",
+		"/Users/evp/Google Drive/iOS/uikit-questions",
+		"/Users/evp/Documents/iOS/PlayRemoteMp3/PlayRemoteMp3/RemoteMp3Player.swift",
+		"/Users/evp/Documents/iOS/PlayRemoteMp3/PlayRemoteMp3/AppDelegate.swift",
+		"/Users/evp/Documents/iOS/PlayRemoteMp3/PlayRemoteMp3/ViewController.swift",
+		"/Users/evp/Documents/iOS/MdsClient/MdsClient/RemoteMp3Player.swift",
+		"/Users/evp/Documents/iOS/MdsClient/simple steps",
+		"/Users/evp/Library/Application Support/Sublime Text 3/Packages/User/doc.swift.sublime-snippet",
+		"/Users/evp/Documents/iOS/MdsClient/MdsClient/SearchCatalog.swift",
+		"/Users/evp/Documents/iOS/MdsClient/MdsClient/Ajax.swift",
+		"/Users/evp/Documents/iOS/MdsClient/MdsClient/AppDelegate.swift",
+		"/Users/evp/Documents/iOS/MdsClient/MdsClient/Access.swift",
+		"/Users/evp/Documents/iOS/MdsClient/MdsClient/DataModel.swift",
+		"/Users/evp/Documents/iOS/MdsClient/MdsClient/Record.swift",
+		"/Users/evp/Documents/iOS/MdsClient/MdsClient/Track.swift",
+		"/Users/evp/Library/Application Support/Sublime Text 3/Packages/User/mark.swift.sublime-snippet",
+		"/Users/evp/Library/Application Support/Sublime Text 3/Packages/User/fixme.swift.sublime-snippet",
+		"/Users/evp/Documents/iOS/MdsClientReadStaticJson/MdsClientReadStaticJson/Records.json",
+		"/Users/evp/Google Drive/iOS/swift.txt",
+		"/Users/evp/Documents/iOS/MdsClient/.gitignore",
+		"/Users/evp/Documents/iOS/MdsClient/MdsClient/Token.swift",
+		"/Users/evp/Documents/iOS/PlayRemoteMp3/PlayRemoteMp3/Base.lproj/Main.storyboard",
+		"/Users/evp/Documents/iOS/PlayRemoteMp3/PlayRemoteMp3Tests/Info.plist",
+		"/Users/evp/Documents/iOS/PlayRemoteMp3/PlayRemoteMp3.xcodeproj/xcuserdata/evp.xcuserdatad/xcdebugger/Breakpoints_v2.xcbkptlist",
+		"/Users/evp/Documents/iOS/PlayRemoteMp3/PlayRemoteMp3.xcodeproj/project.xcworkspace/xcuserdata/evp.xcuserdatad/UserInterfaceState.xcuserstate",
+		"/Users/evp/Documents/iOS/PlayRemoteMp3/PlayRemoteMp3.xcodeproj/project.pbxproj",
+		"/Users/evp/Documents/iOS/PlayRemoteMp3/PlayMp3Tests/PlayMp3Tests.swift",
+		"/Users/evp/Documents/iOS/PlayRemoteMp3/PlayMp3/ViewController.swift",
+		"/Users/evp/Documents/iOS/PlayRemoteMp3/PlayMp3/Base.lproj/Main.storyboard",
+		"/Users/evp/Documents/iOS/PlayRemoteMp3/PlayMp3/Base.lproj/LaunchScreen.xib",
+		"/Users/evp/Documents/iOS/PlayRemoteMp3/PlayMp3/AppDelegate.swift",
+		"/Users/evp/Documents/iOS/PlayRemoteMp3/PlayMp3.xcodeproj/xcuserdata/evp.xcuserdatad/xcschemes/xcschememanagement.plist",
+		"/Users/evp/Documents/iOS/PlayRemoteMp3/PlayMp3.xcodeproj/xcuserdata/evp.xcuserdatad/xcschemes/PlayMp3.xcscheme",
+		"/Users/evp/Documents/iOS/PlayRemoteMp3/PlayMp3.xcodeproj/xcuserdata/evp.xcuserdatad/xcdebugger/Breakpoints_v2.xcbkptlist",
+		"/Users/evp/Documents/iOS/PlayRemoteMp3/PlayMp3.xcodeproj/project.xcworkspace/xcuserdata/evp.xcuserdatad/UserInterfaceState.xcuserstate",
+		"/Users/evp/Documents/iOS/PlayMp3/PlayMp3/AppDelegate.swift",
+		"/Users/evp/Documents/iOS/PlayRemoteMp3/PlayMp3.xcodeproj/project.pbxproj",
+		"/Users/evp/Documents/iOS/PlayRemoteMp3/PlayMp3.xcodeproj/project.xcworkspace/contents.xcworkspacedata",
+		"/Users/evp/Documents/iOS/PlayMp3/PlayMp3/ViewController.swift",
+		"/Users/evp/Documents/iOS/PlayRemoteMp3/PlayRemoteMp3/AuthorsCtlr.swift",
+		"/Users/evp/Documents/iOS/PlayRemoteMp3/PlayRemoteMp3/CompositionsCtlr.swift",
+		"/Users/evp/Library/Caches/com.binarynights.ForkLift2/#0/mds-catalog.php",
+		"/Users/evp/Documents/iOS/04 - Locations Tab/MapViewController.swift",
+		"/Users/evp/Documents/iOS/GeoLocation/Functions.swift",
+		"/Users/evp/Documents/iOS/04 - Locations Tab/MyLocations/SecondViewController.swift",
+		"/Users/evp/Documents/iOS/GeoLocation/GeoLocation/Base.lproj/Main.storyboard",
+		"/Users/evp/Documents/iOS/GeoLocation/GeoLocation/TagLocationCtlr.swift",
+		"/Users/evp/Documents/iOS/GeoLocation/GeoLocation/GetLocationCtlr.swift",
+		"/Users/evp/Library/Application Support/Sublime Text 3/Packages/User/Default (OSX).sublime-keymap",
+		"/Users/evp/Documents/iOS/GeoLocation/GeoLocation/AppDelegate.swift",
+		"/Users/evp/Documents/iOS/GeoLocation/GeoLocation/LocationsCtlr.swift",
+		"/Users/evp/Documents/iOS/GeoLocation/GeoLocation/Location.swift",
+		"/Users/evp/Library/Application Support/Sublime Text 3/Packages/Default/Default (OSX).sublime-keymap",
+		"/Users/evp/Library/Application Support/Sublime Text 3/Packages/User/Preferences.sublime-settings",
+		"/Users/evp/Documents/iOS/GeoLocation/GeoLocation/DataModel.swift",
+		"/Volumes/bumagi.net/bumagi.net/public_html/css/style.css",
+		"/Volumes/bumagi.net/bumagi.net/public_html/admin/models/swiftjs/all.tpl",
+		"/Volumes/bumagi.net/bumagi.net/public_html/admin/models/swiftjs/_models.php",
+		"/Volumes/bumagi.net/bumagi.net/public_html/admin/models/texts/_views.php",
+		"/Volumes/bumagi.net/bumagi.net/public_html/admin/models/swiftjs/_views.php",
+		"/Users/evp/Documents/iOS/GeoLocation/GeoLocation/CategoryPickerCtlr.swift",
+		"/Users/evp/Library/Application Support/Sublime Text 3/Packages/JSHint Gutter/Default (OSX).sublime-keymap",
+		"/Users/evp/Library/Application Support/Sublime Text 3/Packages/JSHint Gutter/.jshintrc",
+		"/Users/evp/Documents/html5/labirint/index.html",
+		"/Users/evp/Documents/html5/labirint/game.js",
+		"/Users/evp/Library/Application Support/Sublime Text 3/Packages/Emmet/Default (OSX).sublime-keymap",
+		"/Users/evp/Documents/iOS/GeoLocation/GeoLocation/CurrentLocationCtlr.swift",
+		"/Users/evp/Library/Application Support/Sublime Text 3/Packages/Default/Preferences.sublime-settings",
+		"/Users/evp/Library/Application Support/Sublime Text 3/Packages/User/MySnippets.sublime-settings",
+		"/Users/evp/Library/Application Support/Sublime Text 3/Packages/User/println.swift",
+		"/Users/evp/Library/Application Support/Sublime Text 3/Packages/User/println.swift.sublime-snippet",
+		"/Users/evp/Library/Application Support/Sublime Text 3/Packages/My Snippets/MySnippets.sublime-settings"
+	],
+	"find":
+	{
+		"height": 25.0
+	},
+	"find_in_files":
+	{
+		"height": 93.0,
+		"where_history":
+		[
+			"/Users/evp/Documents/iOS/MdsClient/MdsClient",
+			"/Users/evp/Documents/iOS/PlayRemoteMp3",
+			"/Users/evp/Documents/iOS",
+			"/Users/evp/Documents/iOS/04 - Locations Tab",
+			"/Users/evp/Documents/iOS/GeoLocation",
+			"/Users/evp/Documents/iOS/GeoLocation/GeoLocation"
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"downloadFileFromUrl",
+			"save",
+			"?",
+			"startResumePlaybackOfRecordAssociatedWithButton",
+			"getRecordCellForTableView",
+			"startResumePlaybackOfRecordAssociatedWithButton",
+			"dispatch_get_main_queue",
+			"NSThread.currentThread",
+			"NSThread.currentThread().dispatch_get_main_queue()",
+			"NSThread.currentThread(dispatch_get_main_queue())",
+			"ismainthread",
+			"println(\"++",
+			"+++",
+			"reloadRowsAtIndexPaths",
+			"RemoteMp3PlayerDelegate",
+			"statusChanged",
+			"case",
+			"reloadRowsAtIndexPaths",
+			"atindexpath",
+			"activityIndicator",
+			"playerStatus",
+			"reloadRowsAtIndexPaths",
+			"pausepa",
+			"dataModel.playingRecord",
+			"indexPathForCell",
+			"startResumePlaybackOfRecordAssociatedWithButton",
+			"startActivityIndicatorInCell",
+			"showPlayBtnInCell",
+			"pause",
+			"showPauseBtnInCell",
+			"MyAVPlayerStatus",
+			"getCellContainingButton",
+			"hidePlayBtnInCell",
+			"tableView",
+			"hidePlayBtnInCell",
+			"startResumePlaybackOfRecordAssociatedWithButton",
+			"hidePlayBtnInCell",
+			"startResumePlaybackOfRecordAssociatedWithButton",
+			"startres",
+			"dataModel.playingRecord",
+			"records",
+			"dataModel",
+			"assert",
+			"self.",
+			"pausePlaybackOfRecordAssociatedWithButton",
+			"tableView",
+			"startResumePlaybackOfRecordAssociatedWithButton",
+			"startResumePlayingRecordAssociatedWithButton",
+			"pausePlayback",
+			"startPlayingRecordAssociatedWithButton",
+			"for track in tracks",
+			"urlProtocol",
+			"playingRecord",
+			"hidePauseBtnInCell",
+			"IsPlaying",
+			"isPlaying",
+			"IsPlaying",
+			"isPlaying",
+			"getAnyTrackWithHttpProtocol",
+			"startPlayingRecordAssociatedWithButton",
+			"dataModel",
+			"main",
+			"playBtn",
+			"displayActivityIndicatorInCell",
+			"playBtn",
+			"startPlayingRecord",
+			"getIndexPathByCellChildView",
+			"startPlayingRecord",
+			"dataModel.filteredRecords",
+			"filteredRecords",
+			"getIndexPathByCellChildView",
+			"println",
+			"UIEdgeInsets",
+			"setTableViewMargings",
+			"player",
+			"AudioSession",
+			"startPlayback",
+			"setVolume",
+			"player",
+			"redrawCurentTime",
+			"redrawControlsForStatus",
+			"trackDurationMls",
+			"redrawCurentTime",
+			"redrawControlsForStatus",
+			"volumeSlider",
+			"volumeSlider.value",
+			"volumeSlider.",
+			"startPlayback",
+			"setVolumeTo",
+			"redrawControlsForStatus",
+			"redrawControls",
+			"remoteMp3Player",
+			"redrawCurentTime",
+			"redrawCurentTime(",
+			"currentMp3Index",
+			"urlStrings",
+			"getCurrentMp3Url",
+			"mp3UrlCtrl",
+			"mp3UrlCtlr",
+			"mp3UrlCtrl",
+			"mp3UrlCtlr",
+			"mp3UrlCtrl",
+			"observeValueForKeyPath",
+			"trackDuration =",
+			"stopKeyPathsObserving",
+			"            if pauseBtn.enabled { pauseBtn.enabled = false }\n            if resumeBtn.enabled { resumeBtn.enabled = false }\n            if volumeSlider.enabled { volumeSlider.enabled = false }\n            if timeSlider.enabled { timeSlider.enabled = false }\n            if !activityIndicator.isAnimating() { activityIndicator.startAnimating() }\n",
+			"reportCurrentTimeTimer",
+			"stopKeyPathsObserving",
+			"throw",
+			"throwErrorWithCode",
+			"TimeSliderIsNil",
+			"volumeSlider",
+			"pause",
+			"PlayBtnIsNil",
+			"throwErrorWithCode",
+			"throw",
+			"player!.",
+			"condition",
+			"player!",
+			"player.",
+			"player",
+			"fixme",
+			"FIXME",
+			"fixme",
+			"redrawCurentTime",
+			"throwErrorMessage",
+			"redrawCurentTime",
+			"moveTimeSliderToPosition"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+			"\\\"",
+			"volumeSliderMoved",
+			"timeSliderReleased",
+			"timeSlider",
+			"currentTimeSliderTouchedUpInside",
+			"currentTimeSliderTouchedUpOutside",
+			"setVolumeTo",
+			"currentTimeSliderTouchedUpOutside",
+			"currentTimeSliderTouchedUpInside",
+			"currentTimeSliderTouchedDown",
+			"volumeSliderChanged",
+			"resumeBtn",
+			"pauseBtn",
+			"playBtn",
+			"currentTimeLbl",
+			"currentTimeSlider",
+			"PlayRemoteMp3",
+			"crash",
+			"multilineAddressOfPlacemark"
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 0,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 0,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Text/Plain text.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 25.0
+	},
+	"input":
+	{
+		"height": 33.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"pinned_build_system": "",
+	"project": "MdsClient.sublime-project",
+	"replace":
+	{
+		"height": 46.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"searc",
+				"MdsClient/MdsClient/SearchCatalog.swift"
+			],
+			[
+				"track",
+				"MdsClient/MdsClient/Track.swift"
+			],
+			[
+				"record.s",
+				"MdsClient/MdsClient/Record.swift"
+			],
+			[
+				"viewc",
+				"PlayRemoteMp3/PlayRemoteMp3/ViewController.swift"
+			],
+			[
+				"viewco",
+				"PlayRemoteMp3/PlayRemoteMp3/ViewController.swift"
+			],
+			[
+				"remote",
+				"PlayRemoteMp3/PlayRemoteMp3/RemoteMp3Player.swift"
+			],
+			[
+				"mdsclientappdeleg",
+				"MdsClient/MdsClient/AppDelegate.swift"
+			],
+			[
+				"ajax",
+				"MdsClient/MdsClient/Ajax.swift"
+			],
+			[
+				"records",
+				"MdsClientReadStaticJson/MdsClientReadStaticJson/Records.json"
+			],
+			[
+				"record.",
+				"MdsClient/MdsClient/Record.swift"
+			],
+			[
+				"info",
+				"PlayRemoteMp3/Info.plist"
+			],
+			[
+				"tagloca",
+				"GeoLocation/GeoLocation/TagLocationCtlr.swift"
+			]
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 500.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 380.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 340.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}

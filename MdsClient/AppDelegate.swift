@@ -51,10 +51,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         dataModel = DataModel()
 
         if let window = window {
-            if let tabCtlr = window.rootViewController as? UITabBarController {
-                if let viewControllers = tabCtlr.viewControllers {
-                    if let ctlr = viewControllers[0] as? SearchCatalog {
-                        ctlr.dataModel = dataModel
+            if let tabBarCtlr = window.rootViewController as? UITabBarController {
+                if let viewControllers = tabBarCtlr.viewControllers {
+                    if let searchCatalog = viewControllers[0] as? SearchCatalog,
+                        playlist = viewControllers[1] as? Playlist {
+
+                        searchCatalog.dataModel = dataModel
+                        playlist.dataModel = dataModel
                     }
                 }
             }

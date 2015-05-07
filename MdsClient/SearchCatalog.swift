@@ -44,7 +44,7 @@ class SearchCatalog: UIViewController {
 
         assert(dataModel != nil)
 
-        setTableViewMargings()
+        // setTableViewMargings()
         searchBar.becomeFirstResponder()
 
         player = RemoteMp3Player()
@@ -63,6 +63,7 @@ class SearchCatalog: UIViewController {
     }
 
     func redrawRecordsAtIndexPaths(indexPaths: [NSIndexPath]) {
+        // #FIXME: do we have to check main thread here?
         if !isMainThread() {
             dispatch_async(dispatch_get_main_queue()) {
                 self.redrawRecordsAtIndexPaths(indexPaths)
@@ -75,7 +76,21 @@ class SearchCatalog: UIViewController {
         tableView.endUpdates()
     }
 
+    /**
+        Will enable playlist tab if it has records, disable otherwise.
+    */
+    func toggleDisablePlaylistTab() {
+        assert(dataModel != nil)
+
+        if let tabBarCtlr = parentViewController as? UITabBarController,
+            items = tabBarCtlr.tabBar.items as? [UITabBarItem] {
+
+            items[1].enabled = dataModel!.playlist.count > 0
+        }
+    }
+
     // #MARK: - playback
+
     func startOrResumePlaybackOfRecordAssociatedWithButton(playBtn: UIButton) {
         assert(dataModel != nil)
         assert(player != nil)
@@ -147,11 +162,7 @@ class SearchCatalog: UIViewController {
     }
 
     func getCellContainingButton(btn: UIButton) -> UITableViewCell? {
-        assert(dataModel != nil)
-
-        if let dataModel = dataModel,
-            filteredRecords = dataModel.filteredRecords,
-            cellContent = btn.superview,
+        if let cellContent = btn.superview,
             buttonsWrapper = cellContent.superview,
             cell = buttonsWrapper.superview as? UITableViewCell {
                 return cell
@@ -162,18 +173,15 @@ class SearchCatalog: UIViewController {
 
     func getRecordAssociatedWithCell(cell: UITableViewCell) -> Record? {
         assert(dataModel != nil)
-        assert(dataModel!.filteredRecords != nil)
-        assert(dataModel!.filteredRecords!.count > 0)
+        assert(dataModel!.filteredRecords.count > 0)
 
-        if let dataModel = dataModel,
-            filteredRecords = dataModel.filteredRecords,
-            indexPath = tableView.indexPathForCell(cell) {
+        if let indexPath = tableView.indexPathForCell(cell) {
                 let recordIndex = indexPath.row
 
                 // #FIXME: replace assert by throwErrorWithCode
-                assert(recordIndex < filteredRecords.count)
+                assert(recordIndex < dataModel!.filteredRecords.count)
 
-                return filteredRecords[recordIndex]
+                return dataModel!.filteredRecords[recordIndex]
         }
 
         return nil
@@ -201,15 +209,74 @@ extension SearchCatalog: UITableViewDataSource {
     func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         assert(dataModel != nil)
 
-        if let records = dataModel!.filteredRecords {
-            return records.count
-        }
-
-        return 0
+        return dataModel!.filteredRecords.count
     }
 
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
-        return getRecordCellForTableView(tableView, atIndexPath: indexPath)
+        assert(dataModel != nil)
+        assert(player != nil)
+
+        let cellId = CellId.recordCell
+        let cell = tableView.dequeueReusableCellWithIdentifier(cellId) as! UITableViewCell
+        let recordIndex = indexPath.row
+
+        assert(recordIndex < dataModel!.filteredRecords.count)
+
+        let record = dataModel!.filteredRecords[indexPath.row]
+
+        if let index = find(dataModel!.playlist, record) {
+            // #FIXME: create struct with colors
+            cell.backgroundColor = UIColor(red: 250/255.0, green: 239/255.0, blue: 219/255.0, alpha: 1)
+        }
+        else {
+            cell.backgroundColor = UIColor.whiteColor()
+        }
+
+        if let authorLbl = cell.viewWithTag(100) as? UILabel {
+            authorLbl.text = record.author
+        }
+
+        if let titleLbl = cell.viewWithTag(200) as? UILabel {
+            titleLbl.text = record.title
+        }
+
+        if let playBtn = cell.viewWithTag(300) as? UIButton,
+            pauseBtn = cell.viewWithTag(400) as? UIButton,
+            activityIndicator = cell.viewWithTag(500) as? UIActivityIndicatorView {
+
+            let isNowPlayingRecord = (dataModel!.playingRecord === record)
+
+            if record.hasNoTracks {
+                if !playBtn.hidden { playBtn.hidden = true }
+                if !pauseBtn.hidden { pauseBtn.hidden = true }
+                if activityIndicator.isAnimating() { activityIndicator.stopAnimating() }
+            }
+            else if dataModel!.playingRecord === record {
+                let playbackStatus = player!.playbackStatus
+                println("REDRAW CELL of playing record (index: \(indexPath.row), status: \(playbackStatus.rawValue))")
+                switch playbackStatus {
+                case .Playing, .Seeking:
+                    if !playBtn.hidden { playBtn.hidden = true }
+                    if pauseBtn.hidden { pauseBtn.hidden = false }
+                    if activityIndicator.isAnimating() { activityIndicator.stopAnimating() }
+                case .Paused:
+                    if playBtn.hidden { playBtn.hidden = false }
+                    if !pauseBtn.hidden { pauseBtn.hidden = true }
+                    if activityIndicator.isAnimating() { activityIndicator.stopAnimating() }
+                default:
+                    if !playBtn.hidden { playBtn.hidden = true }
+                    if !pauseBtn.hidden { pauseBtn.hidden = true }
+                    if !activityIndicator.isAnimating() { activityIndicator.startAnimating() }
+                }
+            }
+            else {
+                if playBtn.hidden { playBtn.hidden = false }
+                if !pauseBtn.hidden { pauseBtn.hidden = true }
+                if activityIndicator.isAnimating() { activityIndicator.stopAnimating() }
+            }
+        }
+
+        return cell
     }
 
     func tableView(tableView: UITableView, heightForRowAtIndexPath indexPath: NSIndexPath) -> CGFloat {
@@ -217,76 +284,33 @@ extension SearchCatalog: UITableViewDataSource {
 
         return height
     }
-
-
-    func getRecordCellForTableView(tableView: UITableView, atIndexPath indexPath: NSIndexPath) -> UITableViewCell {
-        assert(dataModel != nil)
-        assert(player != nil)
-
-        let cellId = CellId.recordCell
-        let cell = tableView.dequeueReusableCellWithIdentifier(cellId) as! UITableViewCell
-
-        if let dataModel = dataModel,
-            filteredRecords = dataModel.filteredRecords {
-
-            assert(indexPath.row < filteredRecords.count)
-
-            let record = filteredRecords[indexPath.row]
-
-            if let authorLbl = cell.viewWithTag(100) as? UILabel {
-                authorLbl.text = record.author
-            }
-
-            if let titleLbl = cell.viewWithTag(200) as? UILabel {
-                titleLbl.text = record.title
-            }
-
-            if let playBtn = cell.viewWithTag(300) as? UIButton,
-                pauseBtn = cell.viewWithTag(400) as? UIButton,
-                activityIndicator = cell.viewWithTag(500) as? UIActivityIndicatorView {
-
-                let isNowPlayingRecord = (dataModel.playingRecord === record)
-
-                if record.hasNoTracks {
-                    if !playBtn.hidden { playBtn.hidden = true }
-                    if !pauseBtn.hidden { pauseBtn.hidden = true }
-                    if activityIndicator.isAnimating() { activityIndicator.stopAnimating() }
-                }
-                else if dataModel.playingRecord === record {
-                    let playbackStatus = player!.playbackStatus
-                    println("REDRAW CELL of playing record (index: \(indexPath.row), status: \(playbackStatus.rawValue))")
-                    switch playbackStatus {
-                    case .Playing, .Seeking:
-                        if !playBtn.hidden { playBtn.hidden = true }
-                        if pauseBtn.hidden { pauseBtn.hidden = false }
-                        if activityIndicator.isAnimating() { activityIndicator.stopAnimating() }
-                    case .Paused:
-                        if playBtn.hidden { playBtn.hidden = false }
-                        if !pauseBtn.hidden { pauseBtn.hidden = true }
-                        if activityIndicator.isAnimating() { activityIndicator.stopAnimating() }
-                    default:
-                        if !playBtn.hidden { playBtn.hidden = true }
-                        if !pauseBtn.hidden { pauseBtn.hidden = true }
-                        if !activityIndicator.isAnimating() { activityIndicator.startAnimating() }
-                    }
-                }
-                else {
-                    if playBtn.hidden { playBtn.hidden = false }
-                    if !pauseBtn.hidden { pauseBtn.hidden = true }
-                    if activityIndicator.isAnimating() { activityIndicator.stopAnimating() }
-                }
-            }
-        }
-
-        return cell
-    }
 }
 
 // #MARK: - UITableViewDelegate
 
 extension SearchCatalog: UITableViewDelegate {
     func tableView(tableView: UITableView, willSelectRowAtIndexPath indexPath: NSIndexPath) -> NSIndexPath? {
+        assert(dataModel != nil)
+
+        // #FIXME: check if searchBar is first responder
         searchBar.resignFirstResponder()
+
+        let recordIndex = indexPath.row
+
+        assert(recordIndex < dataModel!.filteredRecords.count)
+
+        let record = dataModel!.filteredRecords[recordIndex]
+
+        // #FIXME: use method playlistContainsRecord
+        if dataModel!.playlistContainsRecord(record) {
+            dataModel!.playlistRemoveRecord(record)
+        }
+        else {
+            dataModel!.playlistAddRecord(record)
+        }
+
+        redrawRecordsAtIndexPaths([indexPath])
+        toggleDisablePlaylistTab()
 
         return nil
     }

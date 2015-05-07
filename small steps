@@ -1,0 +1,168 @@
+small steps
+
+[x] add playlist array to data model
+[x] add/remove record to playlist on cell select/deselect
+[x] change background of records in playlist
+[x] disable playlist tab while it has no records
+[ ] start/cancel downloading
+	[ ] Record add status isDownloading
+	[ ] Record add downloadProgress
+	[ ] Record add methods startDownload/cancelDownload
+	[ ] Record store downloadTask
+	[ ]
+	[ ]
+[ ] skip downloading if already done
+[ ] when remove local files?
+[ ]
+[ ]
+[ ]
+[ ]
+[ ]
+[ ]
+[ ]
+[ ]
+[ ]
+[ ]
+[ ]
+[ ]
+[ ]
+[ ]
+[ ]
+[ ]
+[ ]
+[ ]
+[ ]
+[ ]
+[ ]
+[ ]
+[ ]
+[ ]
+[ ]
+[ ]
+[ ]
+[ ]
+[ ]
+[ ]
+[ ]
+[ ]
+[ ]
+[ ]
+[ ]
+[ ]
+[ ]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[x] написать что-то похожее на $.ajax
+[x] отправлять запрос на mds-club и получать весь список
+[x] переделать модель Record
+[x] NSDate -> year
+[x] parse json, create Record objects, store them into DataModel
+[x] display all records
+[-] filter by typing
+[-] group by year
+[x] remove keyboard when touch record cell
+[x] get record url when touch record cell
+[x] pause playback
+[ ] make button/cell redraw right away
+[ ]
+[ ]
+[ ]
+[ ]
+[ ]
+[ ]
+[ ]
+[ ]
+[ ]
+
+
+
+
+
+
+
+
+
+
+[ ] store audio info
+[ ] play first
+[ ] mark as read, remove audio info
+
+
+[x] рефакторинг
+[ ] рефакторинг
+[x] индикатор активности до начала проигрывания
+[x] seek
+[x] no need player.currentItem.currentTime(), use player.currentTime()
+[x] скрывать 00:00:00 до начала проигрывания
+[-] вытащить duration из currentItem
+[ ] display current time while dragging slider
+[ ] activity indicator while seeking
+[x] длину файла
+[x] индикатор проигрывания
+[-] попробовать переместить инициализацию
+[x] вовремя удалить обзервер
+[-] вовремя удалить плеер
+[x] блокировать регулятор громкости пока проигрвыатель не готов
+[-] добавить нотификейшены в обзерверы
+[ ] check for .Failed
+[ ] use addPeriodicTimeObserverForInterval:queue:usingBlock: & removeTimeObserver:
+
+
+[x] make slider available when track available to seek
+
+
+- мы пока пишем код для скорости, которая позволяет проигрывать мп3 без задержек
+- нужно включать индикатор как только мы отпустили ползунок после перемещения и выключать когда проигрывание начиналось с нового места
+- пока отложить ситуацию с перемещением ползунка на паузе
