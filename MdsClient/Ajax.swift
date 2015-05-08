@@ -8,10 +8,18 @@
 import Foundation
 
 class Ajax: NSObject {
+    let errorDomain = "Ajax"
+    enum ErrorCode : Int {
+        case NoResponse             = 1
+        case UnexpectedResponseCode = 2
+    }
+
     var downloadTask: NSURLSessionDownloadTask?
     var localURL: NSURL?
-    var progressHandler: ((Int64, Int64) -> Void)?
-    var completionHandler: (Void -> Void)?
+
+    var progressHandler:   ( (Int64, Int64)->Void )?
+    var completionHandler: ( Void->Void )?
+    var failureHandler:    ( NSError->Void )?
 
     /**
         Creates NSURLSessionDataTask which sends http get request to url
@@ -30,17 +38,23 @@ class Ajax: NSObject {
 
         :returns: NSURLSessionDataTask
     */
-    static func get(#url: NSURL, success: (data: NSData) -> (), fail: (Void -> Void)?) -> NSURLSessionDataTask {
-        println("call Ajax.get() with url: \(url)")
+    static func get(#url: NSURL,
+                    success: NSData->(),
+                    fail:    NSError->Void)
+                    -> NSURLSessionDataTask {
+        // println("call Ajax.get() with url: \(url)")
         let session = NSURLSession.sharedSession()
         let dataTask = session.dataTaskWithURL(url) { data, response, error in
-            println("Ajax.get callback for url: \(url)")
+            // println("Ajax.get callback for url: \(url)")
             if let error = error {
-                if error.code == -999 { return } // task cancelled
+                if error.code == -999 {
+                    // task cancelled
+                    return
+                }
 
                 // The operation couldn’t be completed. (kCFErrorDomainCFNetwork error -1003.)
                 // It happens when URL is unreachable
-                println("ajax-error-task-cancelled: \(error)")
+                throwError(error, withMessage: "Probably the URL [\(url)] is unreachable.", callFailureHandler: fail)
                 return
             }
 
@@ -48,25 +62,13 @@ class Ajax: NSObject {
 
             if httpResponse == nil || httpResponse!.statusCode == 500 {
                 // Server didn't return any response
-                // #FIXME: add optional faill handler and call it with error
-                println("ajax-error-no-response")
-
-                if let fail = fail {
-                    fail()
-                }
-
+                throwError(.NoResponse, withMessage: "Server didn't return any response.", callFailureHandler: fail)
                 return
             }
 
             if httpResponse!.statusCode != 200 {
                 // erver response code != 200
-                // #FIXME: add optional faill handler and call it with error
-                println("ajax-error-unexpected-response-code: \(httpResponse!.statusCode)")
-
-                if let fail = fail {
-                    fail()
-                }
-
+                throwError(.UnexpectedResponseCode, withMessage: "Unexpected response code: \(httpResponse!.statusCode).", callFailureHandler: fail)
                 return
             }
 
@@ -99,9 +101,9 @@ class Ajax: NSObject {
         :returns: NSURLSessionDataTask?
     */
     static func getJsonByUrlString(urlString: String, success: (NSData) -> Void, fail: (Void -> Void)?) -> NSURLSessionDataTask? {
-        println("call getJsonByUrlString with urlString: \(urlString)")
+        // println("call getJsonByUrlString with urlString: \(urlString)")
         if let url = NSURL(string:urlString) {
-            println("url is correct")
+            // println("url is correct")
 
             let dataTask = Ajax.get(url: url, success: success, fail: fail)
 
@@ -191,19 +193,24 @@ class Ajax: NSObject {
 
         Usage:
 
-            Ajax.downloadFileFromUrl(remoteURL, saveTo: localURL, reportingProgress: progressHandler) {
+            Ajax.downloadFileFromUrl(remoteURL, saveTo: localURL, reportingProgress: progress, reportingCompletion: success, reportingFailure: fail) {
                 // completion handler code
             }
 
         :param: remoteURL: NSURL
-        :param: saveTo: NSURL
-        :param: reportingProgress: (Int64, Int64) -> Void
-        :param: reportingCompletion: Void -> Void
+        :param: saveTo:    NSURL
+        :param: reportingProgress:  (Int64, Int64)->Void
+        :param: reportingCompletion: Void->Void
+        :param: reportingFailure:    NSError->Void
 
         :returns: NSURLSessionDownloadTask
     */
-    static func downloadFileFromUrl(remoteURL: NSURL, saveTo localURL: NSURL, reportingProgress progressHandler: (Int64, Int64) -> Void, reportingCompletion completionHandler: Void->Void) -> NSURLSessionDownloadTask {
-        println("call downloadFileFromUrl(), url: \(remoteURL), save to: \(localURL)")
+    static func downloadFileFromUrl(remoteURL: NSURL, saveTo localURL: NSURL,
+                                    reportingProgress progressHandler: (Int64, Int64)->Void,
+                                    reportingCompletion completionHandler: Void->Void,
+                                    reportingFailure failureHandler: NSError->Void)
+                                    -> NSURLSessionDownloadTask {
+        // println("call downloadFileFromUrl(), url: \(remoteURL), save to: \(localURL)")
         let ajax = Ajax()
         let configuration = NSURLSessionConfiguration.defaultSessionConfiguration()
         let session = NSURLSession(configuration: configuration, delegate: ajax, delegateQueue: nil)
@@ -213,11 +220,50 @@ class Ajax: NSObject {
         ajax.localURL = localURL
         ajax.progressHandler = progressHandler
         ajax.completionHandler = completionHandler
+        ajax.failureHandler = failureHandler
 
         downloadTask.resume()
-        println("task \(downloadTask) resumed")
+        // println("task \(downloadTask) resumed")
 
         return downloadTask
+    }
+
+    // MARK: helpers
+
+    /**
+        Will create error:NSError and call generic function logError()
+
+        Usage:
+
+            throwError(.NoResponse, withMessage: "Server didn't return any response.", callFailureHandler: fail)
+
+        :param: code: ErrorCode
+        :param: message: String
+        :param: failureHandler: ( NSError->Void )?
+    */
+    func throwError(code: ErrorCode, withMessage message: String,
+                    callFailureHandler failureHandler: ( NSError->void )? ) {
+        let error = NSError(domain: errorDomain, code: code.rawValue)
+        throwError(error, withMessage: message, callFailureHandler: failureHandler)
+    }
+
+    /**
+        Will create error:NSError and call generic function logError()
+
+        Usage:
+
+            throwError(error, withMessage: "Server didn't return any response.", callFailureHandler: fail)
+
+        :param: code: ErrorCode
+        :param: message: String
+    */
+    func throwError(error: NSError, withMessage message: String,
+                    callFailureHandler failureHandler: ( NSError->void )? ) {
+        logError(error, withMessage: message)
+
+        if let failureHandler = failureHandler {
+            failureHandler(error)
+        }
     }
 }
 
@@ -227,7 +273,7 @@ extension Ajax: NSURLSessionDownloadDelegate {
         assert(self.downloadTask != nil)
         assert(completionHandler != nil)
 
-        println("file saved at \(location)")
+        // println("file saved at \(location)")
 
         if downloadTask == self.downloadTask {
             let fileManager = NSFileManager.defaultManager()
@@ -236,8 +282,8 @@ extension Ajax: NSURLSessionDownloadDelegate {
             fileManager.moveItemAtURL(location, toURL: localURL!, error: &error)
 
             if let error = error {
-                // #FIXME: handle the error
-                println("error moving file: \(error)")
+                logError(error, withMessage: "Can't move file to [\(localURL)].")
+                failureHandler(error)
             }
 
             if let completionHandler = completionHandler {

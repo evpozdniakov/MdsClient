@@ -310,16 +310,19 @@ extension Record: RecordDownload {
         if let fileName = track.url.lastPathComponent {
             let localURL = documentDir.URLByAppendingPathComponent(fileName)
 
-            downloadTask = Ajax.downloadFileFromUrl(track.url, saveTo: localURL, reportingProgress: reportDownloadingProgress) {
-                println("file dowloaded and may be saved")
+            downloadTask = Ajax.downloadFileFromUrl(track.url, saveTo: localURL,
+                reportingProgress: reportDownloadingProgress,
+                reportingSuccess: {
+                    println("file dowloaded and may be saved")
+                    // #FIXME: check if file has been saved to localURL
+                    self.downloadTask = nil
+                },
+                reportingFailure: { error in
+                    println("downloadFileFromUrl error: \(error)")
+                    // #FIXME: cover this case, maybe display [!] icon or alert the error
+                 })
 
-                // #FIXME: check if file has been saved to localURL
-                self.downloadTask = nil
-            }
-
-            println("downloadTask created: \(downloadTask)")
-
-
+            // println("downloadTask created: \(downloadTask)")
         }
         else {
             // #FIXME: handle the error

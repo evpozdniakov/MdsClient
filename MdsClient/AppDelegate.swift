@@ -36,6 +36,15 @@ func throwErrorMessage(message: String, inViewController viewCtlr: UIViewControl
     viewCtlr.presentViewController(alert, animated: true, completion: nil)
 }
 
+func logError(error: NSError, withMessage message: String?) {
+    println(" ")
+    println("ERROR [ \(error.domain): \(error.code) ]")
+    if let message = message {
+        println(message)
+    }
+    println(" ")
+}
+
 // do-nothing function
 func noop(_: AnyObject...) {}
 
