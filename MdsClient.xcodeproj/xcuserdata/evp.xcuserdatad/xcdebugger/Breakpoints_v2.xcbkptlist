@@ -155,8 +155,8 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "225"
             endingLineNumber = "225"
-            landmarkName = "URLSession(_:downloadTask:didFinishDownloadingToURL:)"
-            landmarkType = "5">
+            landmarkName = "Ajax"
+            landmarkType = "3">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -171,7 +171,7 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "250"
             endingLineNumber = "250"
-            landmarkName = "URLSession(_:downloadTask:didWriteData:totalBytesWritten:totalBytesExpectedToWrite:)"
+            landmarkName = "downloadFileFromUrl(_:saveTo:reportingProgress:reportingCompletion:reportingFailure:)"
             landmarkType = "5">
          </BreakpointContent>
       </BreakpointProxy>

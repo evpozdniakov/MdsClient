@@ -194,20 +194,23 @@ class Record: NSObject, NSCoding {
 
             Ajax.getJsonByUrlString(urlString,
                                     success: { data in
-                                        println("clojure with data: \(data)")
-                                        if let json = Ajax.parseJsonArray(data) {
-                                            println("will call fillTracksWithJson")
+                                        // println("clojure with data: \(data)")
+                                        var error: NSError?
+
+                                        if let json = Ajax.parseJsonArray(data, error: &error) {
+                                            // println("will call fillTracksWithJson")
                                             self.fillTracksWithJson(json)
                                         }
-                                        else {
-                                            println("call reportBroken 3")
+                                        else if let error = error {
+                                            // println("call reportBroken 3")
+                                            // #FIXME: report the problem
                                             self.reportBroken()
                                         }
 
                                         completionHandler()
                                     },
-                                    fail: {
-                                        println("++++++++++retry")
+                                    fail: { error in
+                                        // println("++++++++++retry")
                                         self.downloadAndParseTracksJson(completionHandler)
                                     })
         }
@@ -231,7 +234,9 @@ class Record: NSObject, NSCoding {
                         success: { data in
                             println("broken record reported with url: \(url)")
                         },
-                        fail: nil)
+                        fail: { error in
+                            // #FIXME: report error
+                        })
             }
             else {
                 println("cant create URL with \(urlString)")
@@ -312,7 +317,7 @@ extension Record: RecordDownload {
 
             downloadTask = Ajax.downloadFileFromUrl(track.url, saveTo: localURL,
                 reportingProgress: reportDownloadingProgress,
-                reportingSuccess: {
+                reportingCompletion: {
                     println("file dowloaded and may be saved")
                     // #FIXME: check if file has been saved to localURL
                     self.downloadTask = nil

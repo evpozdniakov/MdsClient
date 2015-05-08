@@ -41,14 +41,17 @@ class DataModel: NSObject {
 
             Ajax.getJsonByUrlString(urlString,
                                     success: { data in
-                                        if let json = Ajax.parseJsonArray(data) {
+                                        var error: NSError?
+                                        if let json = Ajax.parseJsonArray(data, error: &error) {
                                             self.fillRecordsWithJson(json)
                                         }
-                                        else {
+                                        else if let error = error {
                                             // #FIXME: no json returned
                                         }
                                     },
-                                    fail: nil)
+                                    fail: { error in
+                                        // #FIXME: tell user about the problem
+                                    })
         }
     }
 
