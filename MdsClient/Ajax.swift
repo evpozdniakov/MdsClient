@@ -47,7 +47,7 @@ class Ajax: NSObject {
 
         :returns: NSURLSessionDataTask
     */
-    static func get(#url: NSURL,
+    internal class func get(#url: NSURL,
                     success: NSData->Void,
                     fail: NSError->Void)
                     -> NSURLSessionDataTask {
@@ -110,7 +110,7 @@ class Ajax: NSObject {
 
         :returns: NSURLSessionDataTask?
     */
-    static func getJsonByUrlString(urlString: String,
+    internal class func getJsonByUrlString(urlString: String,
                                     success: NSData->Void,
                                     fail: NSError->Void)
                                     -> NSURLSessionDataTask? {
@@ -149,7 +149,7 @@ class Ajax: NSObject {
 
         :returns: [AnyObject]?
     */
-    static func parseJsonArray(data: NSData,
+    internal class func parseJsonArray(data: NSData,
                                 error errorPointer: NSErrorPointer)
                                 -> [AnyObject]? {
         if let json = NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions(0), error: errorPointer) as? [AnyObject] {
@@ -190,7 +190,7 @@ class Ajax: NSObject {
 
         :returns: [String: AnyObject]?
     */
-    static func parseJsonDictionary(data: NSData,
+    internal class func parseJsonDictionary(data: NSData,
                                     error errorPointer: NSErrorPointer)
                                     -> [String: AnyObject]? {
 
@@ -240,7 +240,7 @@ class Ajax: NSObject {
 
         :returns: NSURLSessionDownloadTask
     */
-    static func downloadFileFromUrl(remoteURL: NSURL, saveTo localURL: NSURL,
+    internal class func downloadFileFromUrl(remoteURL: NSURL, saveTo localURL: NSURL,
                                     reportingProgress progressHandler: (Int64, Int64)->Void,
                                     reportingCompletion completionHandler: Void->Void,
                                     reportingFailure failureHandler: NSError->Void)
@@ -278,7 +278,7 @@ class Ajax: NSObject {
         :param: message: String Error description.
         :param: failureHandler: ( NSError->Void )? Failutre handler.
     */
-    static func throwError(code: ErrorCode,
+    private class func throwError(code: ErrorCode,
                             withMessage message: String,
                             callFailureHandler failureHandler: ( NSError->Void )? ) {
 
@@ -302,7 +302,7 @@ class Ajax: NSObject {
         :param: message: String Error description.
         :param: failureHandler: ( NSError->Void )? Failure handler.
     */
-    static func throwError(error: NSError,
+    private class func throwError(error: NSError,
                             withMessage message: String,
                             callFailureHandler failureHandler: ( NSError->Void )? ) {
 
