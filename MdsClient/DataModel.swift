@@ -16,14 +16,14 @@ class DataModel: NSObject {
         case PlistWasntSaved = 4
     }
 
-    let errorDomain = "DataModel"
+    static let errorDomain = "DataModel"
 
-    var allRecords = [Record]()
-    var filteredRecords = [Record]()
-    var playlist = [Record]()
-    var playingRecord: Record?
+    static var allRecords = [Record]()
+    static var filteredRecords = [Record]()
+    static var playlist = [Record]()
+    static var playingRecord: Record?
 
-    var playingRecordIndex: Int? {
+    static var playingRecordIndex: Int? {
         if let playingRecord = self.playingRecord {
 
             return find(filteredRecords, playingRecord)
@@ -41,7 +41,7 @@ class DataModel: NSObject {
 
         :param: searchString: String
     */
-    func filterRecordsWhichContainText(searchString: String) {
+    static func filterRecordsWhichContainText(searchString: String) {
         let searchStringLowercase = searchString.lowercaseString
 
         filteredRecords = [Record]()
@@ -69,7 +69,7 @@ class DataModel: NSObject {
 
         :param: reportError: String->Void
     */
-    func downloadAllRecordsJson(reportError: String->Void) {
+    static func downloadAllRecordsJson(reportError: String->Void) {
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
             let urlString = "http://core.mds-club.ru/api/v1.0/mds/records/?access-token=" + Access.generateToken()
 
@@ -101,7 +101,7 @@ class DataModel: NSObject {
 
         :param: json: [AnyObject]
     */
-    func fillRecordsWithJson(json: [AnyObject]) {
+    static func fillRecordsWithJson(json: [AnyObject]) {
         allRecords = [Record]()
 
         for entry in json {
@@ -139,7 +139,7 @@ class DataModel: NSObject {
 
             storeRecords()
     */
-    func storeRecords() {
+    static func storeRecords() {
         assert(allRecords.count > 0)
 
         if let filePath = getDataFilePath() {
@@ -167,7 +167,7 @@ class DataModel: NSObject {
 
         :param: reportError: String->Void
     */
-    func loadRecords(reportError: String->Void) {
+    static func loadRecords(reportError: String->Void) {
         if let filePath = getDataFilePath() {
             if NSFileManager.defaultManager().fileExistsAtPath(filePath) {
                 if let data = NSData(contentsOfFile: filePath) {
@@ -210,7 +210,7 @@ class DataModel: NSObject {
 
         :returns: Bool
     */
-    func playlistContainsRecord(record: Record) -> Bool {
+    static func playlistContainsRecord(record: Record) -> Bool {
         if let index = find(playlist, record) {
             return true
         }
@@ -227,7 +227,7 @@ class DataModel: NSObject {
 
         :param: Record
     */
-    func playlistRemoveRecord(record: Record) {
+    static func playlistRemoveRecord(record: Record) {
         if let index = find(playlist, record) {
             playlist.removeAtIndex(index)
             record.cancelDownloading()
@@ -246,7 +246,7 @@ class DataModel: NSObject {
 
         :param: Record
     */
-    func playlistAddRecord(record: Record) {
+    static func playlistAddRecord(record: Record) {
         playlist.append(record)
         record.startDownloading()
     }
@@ -262,10 +262,10 @@ class DataModel: NSObject {
 
         :returns: String?
     */
-    func getDataFilePath() -> String? {
+    static func getDataFilePath() -> String? {
         if let documentsDir = documementsDirectory() {
             let filePath = documentsDir.stringByAppendingPathComponent("DataModel.plist")
-            // println("filePath:\(filePath)")
+            println("filePath:\(filePath)")
 
             return filePath
         }
@@ -282,7 +282,7 @@ class DataModel: NSObject {
 
         :returns: String?
     */
-    func documementsDirectory() -> String? {
+    static func documementsDirectory() -> String? {
         if let paths = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true) as? [String] {
             return paths[0]
         }
@@ -306,7 +306,7 @@ class DataModel: NSObject {
         :param: message: String Error description.
         :param: failureHandler: ( NSError->Void )? Failutre handler.
     */
-    func throwError(code: ErrorCode,
+    static func throwError(code: ErrorCode,
                             withMessage message: String,
                             callFailureHandler failureHandler: ( NSError->Void )? ) {
 
@@ -330,7 +330,7 @@ class DataModel: NSObject {
         :param: message: String Error description.
         :param: failureHandler: ( NSError->Void )? Failure handler.
     */
-    func throwError(error: NSError,
+    static func throwError(error: NSError,
                             withMessage message: String,
                             callFailureHandler failureHandler: ( NSError->Void )? ) {
 

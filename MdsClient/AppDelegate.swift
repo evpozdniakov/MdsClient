@@ -52,25 +52,9 @@ func noop(_: AnyObject...) {}
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
-    var dataModel: DataModel?
-
 
     func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
         // Override point for customization after application launch.
-        dataModel = DataModel()
-
-        if let window = window {
-            if let tabBarCtlr = window.rootViewController as? UITabBarController {
-                if let viewControllers = tabBarCtlr.viewControllers {
-                    if let searchCatalog = viewControllers[0] as? SearchCatalog,
-                        playlist = viewControllers[1] as? Playlist {
-
-                        searchCatalog.dataModel = dataModel
-                        playlist.dataModel = dataModel
-                    }
-                }
-            }
-        }
 
         return true
     }
@@ -83,7 +67,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func applicationDidEnterBackground(application: UIApplication) {
         // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
         // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
-        dataModel?.storeRecords()
+        DataModel.storeRecords()
     }
 
     func applicationWillEnterForeground(application: UIApplication) {
@@ -96,7 +80,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func applicationWillTerminate(application: UIApplication) {
         // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
-        dataModel?.storeRecords()
+        DataModel.storeRecords()
     }
 }
 

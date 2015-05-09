@@ -11,7 +11,6 @@ import UIKit
 class Playlist: UIViewController {
     // #MARK: - ivars
 
-    var dataModel: DataModel?
     var cellReloadTimer: NSTimer?
 
     @IBOutlet weak var playlistTable: UITableView!
@@ -21,7 +20,6 @@ class Playlist: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        assert(dataModel != nil)
     }
 
     override func viewWillAppear(animated: Bool) {
@@ -79,10 +77,9 @@ class Playlist: UIViewController {
     // #MARK: - redraw
 
     func reloadDownloadingRecordCells() {
-        assert(dataModel != nil)
 
         var indexPaths = [NSIndexPath]()
-        let playlist = dataModel!.playlist
+        let playlist = DataModel.playlist
 
         for var index = 0; index < playlist.count; ++index {
             if playlist[index].isDownloading {
@@ -119,20 +116,18 @@ class Playlist: UIViewController {
 
 extension Playlist: UITableViewDataSource {
     func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        assert(dataModel != nil)
 
-        return dataModel!.playlist.count
+        return DataModel.playlist.count
     }
 
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
-        assert(dataModel != nil)
 
         let cell = tableView.dequeueReusableCellWithIdentifier("RecordCell") as! UITableViewCell
         let recordIndex = indexPath.row
 
-        assert(recordIndex < dataModel!.playlist.count)
+        assert(recordIndex < DataModel.playlist.count)
 
-        let record = dataModel!.playlist[indexPath.row]
+        let record = DataModel.playlist[indexPath.row]
 
 
         // println("row: \(indexPath.row)")

@@ -17,7 +17,6 @@ class SearchCatalog: UIViewController {
 
     // #MARK: - ivars
 
-    var dataModel: DataModel?
     var lastSearchQuery = ""
     var searchResults = [Record]()
     var player: RemoteMp3Player?
@@ -42,7 +41,6 @@ class SearchCatalog: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        assert(dataModel != nil)
 
         // setTableViewMargings()
         searchBar.becomeFirstResponder()
@@ -78,26 +76,24 @@ class SearchCatalog: UIViewController {
         Will enable playlist tab if it has records, disable otherwise.
     */
     func toggleDisablePlaylistTab() {
-        assert(dataModel != nil)
 
         if let tabBarCtlr = parentViewController as? UITabBarController,
             items = tabBarCtlr.tabBar.items as? [UITabBarItem] {
 
-            items[1].enabled = dataModel!.playlist.count > 0
+            items[1].enabled = DataModel.playlist.count > 0
         }
     }
 
     // #MARK: - playback
 
     func startOrResumePlaybackOfRecordAssociatedWithButton(playBtn: UIButton) {
-        assert(dataModel != nil)
         assert(player != nil)
 
         if let cell = getCellContainingButton(playBtn),
             record = getRecordAssociatedWithCell(cell),
             indexPath = tableView.indexPathForCell(cell) {
 
-            let previousRecord = dataModel!.playingRecord
+            let previousRecord = DataModel.playingRecord
             var indexPathsToRedraw = [NSIndexPath]()
 
             indexPathsToRedraw.append(indexPath)
@@ -111,14 +107,14 @@ class SearchCatalog: UIViewController {
                     // stop playing previous record
                     player!.stop()
 
-                    if let index = dataModel!.playingRecordIndex {
+                    if let index = DataModel.playingRecordIndex {
                         // store previous record cell indexPath
                         indexPathsToRedraw.append(NSIndexPath(forRow: index, inSection: 0))
                     }
                 }
 
                 // start playing record
-                dataModel!.playingRecord = record
+                DataModel.playingRecord = record
                 record.getFirstPlayableTrack() { track in
                     if let track = track {
                         self.player!.startPlayback(url: track.url)
@@ -139,14 +135,13 @@ class SearchCatalog: UIViewController {
     }
 
     func pausePlaybackOfRecordAssociatedWithButton(pauseBtn: UIButton) {
-        assert(dataModel != nil)
         assert(player != nil)
 
         if let cell = getCellContainingButton(pauseBtn),
             record = getRecordAssociatedWithCell(cell),
             indexPath = tableView.indexPathForCell(cell) {
 
-            assert(record == dataModel!.playingRecord)
+            assert(record == DataModel.playingRecord)
 
             player!.pausePlayback()
         }
@@ -156,7 +151,7 @@ class SearchCatalog: UIViewController {
 
     func loadRecords() {
         // ask dataModel to load records
-        dataModel!.loadRecords() { errorMsg in
+        DataModel.loadRecords() { errorMsg in
             throwErrorMessage(errorMsg, inViewController: self) {
                 // #TODO: replace alert by confirmation dialog
                 self.loadRecords()
@@ -179,14 +174,13 @@ class SearchCatalog: UIViewController {
     }
 
     func getRecordAssociatedWithCell(cell: UITableViewCell) -> Record? {
-        assert(dataModel != nil)
-        assert(dataModel!.filteredRecords.count > 0)
+        assert(DataModel.filteredRecords.count > 0)
 
         if let indexPath = tableView.indexPathForCell(cell) {
             let recordIndex = indexPath.row
 
-            if recordIndex < dataModel!.filteredRecords.count {
-                return dataModel!.filteredRecords[recordIndex]
+            if recordIndex < DataModel.filteredRecords.count {
+                return DataModel.filteredRecords[recordIndex]
             }
         }
 
@@ -201,10 +195,9 @@ class SearchCatalog: UIViewController {
 
 extension SearchCatalog: RemoteMp3PlayerDelegate {
     func remoteMp3Player(player: RemoteMp3Player, statusChanged playbackStatus: MyAVPlayerStatus) {
-        assert(dataModel != nil)
 
         // println("================ remoteMp3Player status changed: \(playbackStatus.rawValue)")
-        if let playingRecordIndex = dataModel!.playingRecordIndex {
+        if let playingRecordIndex = DataModel.playingRecordIndex {
             let indexPath = NSIndexPath(forRow: playingRecordIndex, inSection: 0)
 
             redrawRecordsAtIndexPaths([indexPath])
@@ -216,25 +209,23 @@ extension SearchCatalog: RemoteMp3PlayerDelegate {
 
 extension SearchCatalog: UITableViewDataSource {
     func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        assert(dataModel != nil)
 
-        return dataModel!.filteredRecords.count
+        return DataModel.filteredRecords.count
     }
 
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
         assert(isMainThread())
-        assert(dataModel != nil)
         assert(player != nil)
 
         let cellId = CellId.recordCell
         let cell = tableView.dequeueReusableCellWithIdentifier(cellId) as! UITableViewCell
         let recordIndex = indexPath.row
 
-        assert(recordIndex < dataModel!.filteredRecords.count)
+        assert(recordIndex < DataModel.filteredRecords.count)
 
-        let record = dataModel!.filteredRecords[indexPath.row]
+        let record = DataModel.filteredRecords[indexPath.row]
 
-        if let index = find(dataModel!.playlist, record) {
+        if let index = find(DataModel.playlist, record) {
             // #TODO: create struct with colors
             cell.backgroundColor = UIColor(red: 250/255.0, green: 239/255.0, blue: 219/255.0, alpha: 1)
         }
@@ -254,14 +245,14 @@ extension SearchCatalog: UITableViewDataSource {
             pauseBtn = cell.viewWithTag(400) as? UIButton,
             activityIndicator = cell.viewWithTag(500) as? UIActivityIndicatorView {
 
-            let isNowPlayingRecord = (dataModel!.playingRecord === record)
+            let isNowPlayingRecord = (DataModel.playingRecord === record)
 
             if record.hasNoTracks {
                 if !playBtn.hidden { playBtn.hidden = true }
                 if !pauseBtn.hidden { pauseBtn.hidden = true }
                 if activityIndicator.isAnimating() { activityIndicator.stopAnimating() }
             }
-            else if dataModel!.playingRecord === record {
+            else if DataModel.playingRecord === record {
                 let playbackStatus = player!.playbackStatus
                 // println("-------- REDRAW CELL of playing record (index: \(indexPath.row), status: \(playbackStatus.rawValue))")
                 switch playbackStatus {
@@ -300,7 +291,6 @@ extension SearchCatalog: UITableViewDataSource {
 
 extension SearchCatalog: UITableViewDelegate {
     func tableView(tableView: UITableView, willSelectRowAtIndexPath indexPath: NSIndexPath) -> NSIndexPath? {
-        assert(dataModel != nil)
 
         if searchBar.isFirstResponder() {
             // #TODO: make keyboard disappear even if we touch screen
@@ -310,15 +300,15 @@ extension SearchCatalog: UITableViewDelegate {
 
         let recordIndex = indexPath.row
 
-        assert(recordIndex < dataModel!.filteredRecords.count)
+        assert(recordIndex < DataModel.filteredRecords.count)
 
-        let record = dataModel!.filteredRecords[recordIndex]
+        let record = DataModel.filteredRecords[recordIndex]
 
-        if dataModel!.playlistContainsRecord(record) {
-            dataModel!.playlistRemoveRecord(record)
+        if DataModel.playlistContainsRecord(record) {
+            DataModel.playlistRemoveRecord(record)
         }
         else {
-            dataModel!.playlistAddRecord(record)
+            DataModel.playlistAddRecord(record)
         }
 
         redrawRecordsAtIndexPaths([indexPath])
@@ -338,10 +328,9 @@ extension SearchCatalog: UITableViewDelegate {
 
 extension SearchCatalog: UISearchBarDelegate {
     func searchBarSearchButtonClicked(searchBar: UISearchBar) {
-        assert(dataModel != nil)
         // println("search button clicked, search string: '\(searchBar.text)'")
         searchBar.resignFirstResponder()
-        dataModel!.filterRecordsWhichContainText(searchBar.text)
+        DataModel.filterRecordsWhichContainText(searchBar.text)
         tableView.reloadData()
     }
 
