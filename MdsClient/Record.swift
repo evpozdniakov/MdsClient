@@ -276,7 +276,7 @@ extension Record: RecordDownload {
                 self.isDownloading = false
                 // #FIXME: display this record with ! sign in playlist tab
                 // // no tracks found
-                // throwErrorMessage("Файл mp3 не найден на сервере.", inViewController: self) {
+                // appDisplayError("Файл mp3 не найден на сервере.", inViewController: self) {
                 //     self.redrawRecordsAtIndexPaths([indexPath])
                 // }
             }

@@ -13,9 +13,9 @@ import UIKit
 
     Usage:
 
-        throwErrorMessage("Message text", withHandler: nil, inViewController: self)
+        appDisplayError("Message text", withHandler: nil, inViewController: self)
 */
-func throwErrorMessage(message: String, inViewController viewCtlr: UIViewController, withHandler handler: (Void -> Void)?) {
+internal func appDisplayError(message: String, inViewController viewCtlr: UIViewController, withHandler handler: (Void -> Void)?) {
     let alert = UIAlertController(
         title: "Ошибка!",
         message: message,
@@ -36,17 +36,19 @@ func throwErrorMessage(message: String, inViewController viewCtlr: UIViewControl
     viewCtlr.presentViewController(alert, animated: true, completion: nil)
 }
 
-func logError(error: NSError, withMessage message: String?) {
-    println(" ")
-    println("ERROR [ \(error.domain): \(error.code) ]")
-    if let message = message {
-        println(message)
+internal func appLogError(error: NSError, withMessage message: String, callFailureHandler fail: ( NSError->Void )?) {
+    appLogError(error, withMessage: message)
+    if let fail = fail {
+        fail(error)
     }
-    println(" ")
 }
 
-// do-nothing function
-func noop(_: AnyObject...) {}
+internal func appLogError(error: NSError, withMessage message: String) {
+    println(" ")
+    println("ERROR [ \(error.domain): \(error.code) ]")
+    println(message)
+    println(" ")
+}
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {

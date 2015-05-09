@@ -334,7 +334,7 @@ class DataModel: NSObject {
                             withMessage message: String,
                             callFailureHandler failureHandler: ( NSError->Void )? ) {
 
-        logError(error, withMessage: message)
+        appLogError(error, withMessage: message)
 
         if let failureHandler = failureHandler {
             failureHandler(error)

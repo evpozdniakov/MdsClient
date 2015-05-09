@@ -121,7 +121,7 @@ class SearchCatalog: UIViewController {
                     }
                     else {
                         // no tracks found
-                        throwErrorMessage("Файл mp3 не найден на сервере.", inViewController: self) {
+                        appDisplayError("Файл mp3 не найден на сервере.", inViewController: self) {
                             self.redrawRecordsAtIndexPaths([indexPath])
                         }
                     }
@@ -152,7 +152,7 @@ class SearchCatalog: UIViewController {
     func loadRecords() {
         // ask dataModel to load records
         DataModel.loadRecords() { errorMsg in
-            throwErrorMessage(errorMsg, inViewController: self) {
+            appDisplayError(errorMsg, inViewController: self) {
                 // #TODO: replace alert by confirmation dialog
                 self.loadRecords()
             }
