@@ -50,8 +50,7 @@ class SearchCatalog: UIViewController {
         player = RemoteMp3Player()
         player!.delegate = self
 
-        // ask dataModel to load records
-        dataModel!.loadRecords()
+        loadRecords()
     }
 
     // #MARK: - redraw
@@ -63,7 +62,6 @@ class SearchCatalog: UIViewController {
     }
 
     func redrawRecordsAtIndexPaths(indexPaths: [NSIndexPath]) {
-        // #FIXME: do we have to check main thread here?
         if !isMainThread() {
             dispatch_async(dispatch_get_main_queue()) {
                 self.redrawRecordsAtIndexPaths(indexPaths)
@@ -135,27 +133,36 @@ class SearchCatalog: UIViewController {
             }
 
             // redraw
-            println("redraw table after CLICK")
+            // println("redraw table after CLICK")
             redrawRecordsAtIndexPaths(indexPathsToRedraw)
         }
     }
 
     func pausePlaybackOfRecordAssociatedWithButton(pauseBtn: UIButton) {
+        assert(dataModel != nil)
+        assert(player != nil)
+
         if let cell = getCellContainingButton(pauseBtn),
             record = getRecordAssociatedWithCell(cell),
-            indexPath = tableView.indexPathForCell(cell),
-            player = player,
-            dataModel = dataModel {
-                assert(record == dataModel.playingRecord)
+            indexPath = tableView.indexPathForCell(cell) {
 
-                player.pausePlayback()
-                // #FIXME: send show hide buttons as closure when action takes effect
-                // put activityIndicator meanwhile
-                // tableView.reloadRowsAtIndexPaths([indexPath], withRowAnimation: .None)
+            assert(record == dataModel!.playingRecord)
+
+            player!.pausePlayback()
         }
     }
 
     // #MARK: miscellaneous
+
+    func loadRecords() {
+        // ask dataModel to load records
+        dataModel!.loadRecords() { errorMsg in
+            throwErrorMessage(errorMsg, inViewController: self) {
+                // #TODO: replace alert by confirmation dialog
+                self.loadRecords()
+            }
+        }
+    }
 
     func isMainThread() -> Bool {
         return NSThread.currentThread().isMainThread
@@ -176,13 +183,15 @@ class SearchCatalog: UIViewController {
         assert(dataModel!.filteredRecords.count > 0)
 
         if let indexPath = tableView.indexPathForCell(cell) {
-                let recordIndex = indexPath.row
+            let recordIndex = indexPath.row
 
-                // #FIXME: replace assert by throwErrorWithCode
-                assert(recordIndex < dataModel!.filteredRecords.count)
-
+            if recordIndex < dataModel!.filteredRecords.count {
                 return dataModel!.filteredRecords[recordIndex]
+            }
         }
+
+        // if for the record wasn't found for some reason, reload table data
+        tableView.reloadData()
 
         return nil
     }
@@ -194,7 +203,7 @@ extension SearchCatalog: RemoteMp3PlayerDelegate {
     func remoteMp3Player(player: RemoteMp3Player, statusChanged playbackStatus: MyAVPlayerStatus) {
         assert(dataModel != nil)
 
-        println("================ remoteMp3Player status changed: \(playbackStatus.rawValue)")
+        // println("================ remoteMp3Player status changed: \(playbackStatus.rawValue)")
         if let playingRecordIndex = dataModel!.playingRecordIndex {
             let indexPath = NSIndexPath(forRow: playingRecordIndex, inSection: 0)
 
@@ -213,6 +222,7 @@ extension SearchCatalog: UITableViewDataSource {
     }
 
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+        assert(isMainThread())
         assert(dataModel != nil)
         assert(player != nil)
 
@@ -225,7 +235,7 @@ extension SearchCatalog: UITableViewDataSource {
         let record = dataModel!.filteredRecords[indexPath.row]
 
         if let index = find(dataModel!.playlist, record) {
-            // #FIXME: create struct with colors
+            // #TODO: create struct with colors
             cell.backgroundColor = UIColor(red: 250/255.0, green: 239/255.0, blue: 219/255.0, alpha: 1)
         }
         else {
@@ -253,7 +263,7 @@ extension SearchCatalog: UITableViewDataSource {
             }
             else if dataModel!.playingRecord === record {
                 let playbackStatus = player!.playbackStatus
-                println("REDRAW CELL of playing record (index: \(indexPath.row), status: \(playbackStatus.rawValue))")
+                // println("-------- REDRAW CELL of playing record (index: \(indexPath.row), status: \(playbackStatus.rawValue))")
                 switch playbackStatus {
                 case .Playing, .Seeking:
                     if !playBtn.hidden { playBtn.hidden = true }
@@ -292,8 +302,11 @@ extension SearchCatalog: UITableViewDelegate {
     func tableView(tableView: UITableView, willSelectRowAtIndexPath indexPath: NSIndexPath) -> NSIndexPath? {
         assert(dataModel != nil)
 
-        // #FIXME: check if searchBar is first responder
-        searchBar.resignFirstResponder()
+        if searchBar.isFirstResponder() {
+            // #TODO: make keyboard disappear even if we touch screen
+            searchBar.resignFirstResponder()
+            return nil
+        }
 
         let recordIndex = indexPath.row
 
@@ -301,7 +314,6 @@ extension SearchCatalog: UITableViewDelegate {
 
         let record = dataModel!.filteredRecords[recordIndex]
 
-        // #FIXME: use method playlistContainsRecord
         if dataModel!.playlistContainsRecord(record) {
             dataModel!.playlistRemoveRecord(record)
         }
@@ -321,7 +333,6 @@ extension SearchCatalog: UITableViewDelegate {
         return height
     }*/
 }
-
 
 // #MARK: - UISearchBarDelegate
 

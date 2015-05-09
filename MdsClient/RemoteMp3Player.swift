@@ -87,7 +87,7 @@ class RemoteMp3Player: NSObject {
     var trackDurationMls: Int?
     var pausedAt: CMTime?
     var reportCurrentTimeTimer: NSTimer?
-    // #FIXME: configure from view
+    // #TODO: configure from view
     let redrawTimeSliderInterval = 1.0 // seconds
     var lastPlaybackAction: PlaybackAction = .None
     var delegate: RemoteMp3PlayerDelegate?

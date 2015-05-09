@@ -97,12 +97,12 @@ class Ajax: NSObject {
         Usage:
 
             Ajax.getJsonByUrlString("http://bumagi.net/ios/mds/?q=abc",
-                                    success: { data in
-                                        // success code
-                                    },
-                                    fail: { error in
-                                        // failure code
-                                    })
+                success: { data in
+                    // success code
+                },
+                fail: { error in
+                    // failure code
+                })
 
         :param: urlString: String String representing remote URL.
         :param: success: NSData->Void The handler to perform (with response data as parameter) if server returns status 200.

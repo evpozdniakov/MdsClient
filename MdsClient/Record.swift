@@ -188,31 +188,30 @@ class Record: NSObject, NSCoding {
     func downloadAndParseTracksJson(completionHandler: Void -> Void) {
         println("call downloadAndParseTracksJson")
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
+            // println("dispatch async")
             let urlString = "http://core.mds-club.ru/api/v1.0/mds/records/\(self.id)/files/?access-token=" + Access.generateToken()
 
-            println("dispatch async")
-
             Ajax.getJsonByUrlString(urlString,
-                                    success: { data in
-                                        // println("clojure with data: \(data)")
-                                        var error: NSError?
+                success: { data in
+                    // println("clojure with data: \(data)")
+                    var error: NSError?
 
-                                        if let json = Ajax.parseJsonArray(data, error: &error) {
-                                            // println("will call fillTracksWithJson")
-                                            self.fillTracksWithJson(json)
-                                        }
-                                        else if let error = error {
-                                            // println("call reportBroken 3")
-                                            // #FIXME: report the problem
-                                            self.reportBroken()
-                                        }
+                    if let json = Ajax.parseJsonArray(data, error: &error) {
+                        // println("will call fillTracksWithJson")
+                        self.fillTracksWithJson(json)
+                    }
+                    else if let error = error {
+                        // println("call reportBroken 3")
+                        // #FIXME: report the problem
+                        self.reportBroken()
+                    }
 
-                                        completionHandler()
-                                    },
-                                    fail: { error in
-                                        // println("++++++++++retry")
-                                        self.downloadAndParseTracksJson(completionHandler)
-                                    })
+                    completionHandler()
+                },
+                fail: { error in
+                    // println("++++++++++retry")
+                    self.downloadAndParseTracksJson(completionHandler)
+                })
         }
     }
 
@@ -257,22 +256,22 @@ extension Record: RecordDownload {
             startDownloading()
     */
     func startDownloading() {
-        println("call Playlist.startDownloading() for record: \(title)")
+        // println("call Playlist.startDownloading() for record: \(title)")
         isDownloading = true
         getFirstPlayableTrack() { track in
             if let track = track {
-                println("track found for record: \(self.title)")
+                // println("track found for record: \(self.title)")
                 // make sure the record is still in playlist
                 if self.isDownloading {
-                    println("record in still in playlist, start download track: \(track.url)")
+                    // println("record in still in playlist, start download track: \(track.url)")
                     self.downloadTrack(track)
                 }
                 else {
-                    println("it looks like the record is not in playlist any more")
+                    // println("it looks like the record is not in playlist any more")
                 }
             }
             else {
-                println("---has no tracks for record: \(self.title)---")
+                // println("---has no tracks for record: \(self.title)---")
                 self.hasNoTracks = true
                 self.isDownloading = false
                 // #FIXME: display this record with ! sign in playlist tab
@@ -294,13 +293,13 @@ extension Record: RecordDownload {
         :param: track: Track
     */
     func downloadTrack(track: Track) {
-        println("call downloadTrack, url: \(track.url)")
+        // println("call downloadTrack, url: \(track.url)")
         let fileManager = NSFileManager.defaultManager()
         let documentDirs = fileManager.URLsForDirectory(.DocumentDirectory, inDomains: .UserDomainMask)
 
         if documentDirs.count == 0 {
             // #FIXME: handle the error
-            println("Error: NSFileManager didn't find document directory")
+            // println("Error: NSFileManager didn't find document directory")
             return
         }
 
@@ -308,7 +307,7 @@ extension Record: RecordDownload {
 
         if track.url.pathExtension == "" {
             // #FIXME:handle error
-            println("Error: file path [\(track.url)] doesn't have file name")
+            // println("Error: file path [\(track.url)] doesn't have file name")
             return
         }
 
@@ -318,12 +317,12 @@ extension Record: RecordDownload {
             downloadTask = Ajax.downloadFileFromUrl(track.url, saveTo: localURL,
                 reportingProgress: reportDownloadingProgress,
                 reportingCompletion: {
-                    println("file dowloaded and may be saved")
+                    // println("file dowloaded and may be saved")
                     // #FIXME: check if file has been saved to localURL
                     self.downloadTask = nil
                 },
                 reportingFailure: { error in
-                    println("downloadFileFromUrl error: \(error)")
+                    // println("downloadFileFromUrl error: \(error)")
                     // #FIXME: cover this case, maybe display [!] icon or alert the error
                  })
 
@@ -331,7 +330,7 @@ extension Record: RecordDownload {
         }
         else {
             // #FIXME: handle the error
-            println("Error: lastPathComponent is empty or nil")
+            // println("Error: lastPathComponent is empty or nil")
         }
     }
 

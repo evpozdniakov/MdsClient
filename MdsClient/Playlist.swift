@@ -8,7 +8,7 @@
 
 import UIKit
 
-class Playlist: UIViewController, UITableViewDataSource, UITableViewDelegate {
+class Playlist: UIViewController {
     // #MARK: - ivars
 
     var dataModel: DataModel?
@@ -28,7 +28,7 @@ class Playlist: UIViewController, UITableViewDataSource, UITableViewDelegate {
         super.viewWillAppear(animated)
         println("playlist will appear")
 
-        // #FIXME: do not reload if data not changed
+        // #TODO: do not reload if data hasn't changed
         playlistTable.reloadData()
 
         runCellReloadTimer()
@@ -85,7 +85,7 @@ class Playlist: UIViewController, UITableViewDataSource, UITableViewDelegate {
         let playlist = dataModel!.playlist
 
         for var index = 0; index < playlist.count; ++index {
-            if let progress = playlist[index].downloadingProgress {
+            if playlist[index].isDownloading {
                 indexPaths.append(NSIndexPath(forRow: index, inSection: 0))
             }
         }
@@ -95,13 +95,14 @@ class Playlist: UIViewController, UITableViewDataSource, UITableViewDelegate {
 
 
     func redrawRecordsAtIndexPaths(indexPaths: [NSIndexPath]) {
-        // #FIXME: do we have to check main thread here?
-        if !isMainThread() {
+        assert(isMainThread())
+
+        /* if !isMainThread() {
             dispatch_async(dispatch_get_main_queue()) {
                 self.redrawRecordsAtIndexPaths(indexPaths)
             }
             return
-        }
+        } */
 
         playlistTable.beginUpdates()
         playlistTable.reloadRowsAtIndexPaths(indexPaths, withRowAnimation: .None)
