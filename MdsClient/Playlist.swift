@@ -12,6 +12,7 @@ class Playlist: UIViewController {
     // #MARK: - ivars
 
     var cellReloadTimer: NSTimer?
+    var storedLocallyList: [Record]?
 
     @IBOutlet weak var playlistTable: UITableView!
 
@@ -26,8 +27,16 @@ class Playlist: UIViewController {
         super.viewWillAppear(animated)
         println("playlist will appear")
 
+        storedLocallyList = [Record]()
+        for record in DataModel.playlist {
+            if record.isStoredLocally {
+                storedLocallyList!.append(record)
+            }
+        }
+
         // #TODO: do not reload if data hasn't changed
         playlistTable.reloadData()
+
 
         runCellReloadTimer()
     }
@@ -37,6 +46,7 @@ class Playlist: UIViewController {
 
         println("playlist did disappear")
         stopCellReloadTimer()
+        storedLocallyList = nil
     }
 
     // #MARK: - run/stop cell reloader
@@ -59,14 +69,15 @@ class Playlist: UIViewController {
 
     /**
         Stops timer which runs table cell reloading.
+        There are two places where it can be triggered from:
+        - view controller did disappear
+        - all the files downloaded & stored locally
 
         Usage:
 
             stopCellReloadTimer()
     */
     func stopCellReloadTimer() {
-        assert(cellReloadTimer != nil)
-
         if let cellReloadTimer = cellReloadTimer {
             cellReloadTimer.invalidate()
             self.cellReloadTimer = nil
@@ -76,18 +87,37 @@ class Playlist: UIViewController {
 
     // #MARK: - redraw
 
+    /**
+        Creates [NSIndexPath] for playlist records not stored locally yet, then passes it to redrawRecordsAtIndexPaths().
+        If array count is zero, will call stopCellReloadTimer().
+
+        Usage:
+
+            reloadDownloadingRecordCells(indexPaths)
+    */
     func reloadDownloadingRecordCells() {
+        assert(storedLocallyList != nil)
 
         var indexPaths = [NSIndexPath]()
-        let playlist = DataModel.playlist
 
-        for var index = 0; index < playlist.count; ++index {
-            if playlist[index].isDownloading {
-                indexPaths.append(NSIndexPath(forRow: index, inSection: 0))
+        for (i, record) in enumerate(DataModel.playlist) {
+            if record.isDownloading {
+                indexPaths.append(NSIndexPath(forRow: i, inSection: 0))
+            }
+            else if record.isStoredLocally && find(storedLocallyList!, record) == nil {
+                // reload one last time
+                // println("-----------reload last one time row: \(i)")
+                indexPaths.append(NSIndexPath(forRow: i, inSection: 0))
+                storedLocallyList!.append(record)
             }
         }
 
         redrawRecordsAtIndexPaths(indexPaths)
+
+        if storedLocallyList!.count == DataModel.playlist.count {
+            // println("-------------stopCellReloadTimer")
+            stopCellReloadTimer()
+        }
     }
 
 
@@ -129,7 +159,6 @@ extension Playlist: UITableViewDataSource {
 
         let record = DataModel.playlist[indexPath.row]
 
-
         // println("row: \(indexPath.row)")
 
         if let authorLbl = cell.viewWithTag(100) as? UILabel,
@@ -142,31 +171,25 @@ extension Playlist: UITableViewDataSource {
             authorLbl.text = record.author
             titleLbl.text = record.title
 
+            playBtn.hidden = true
+            pauseBtn.hidden = true
+            progressLbl.hidden = true
+            activityIndicator.stopAnimating()
+
             if record.hasNoTracks {
-                // println("A")
                 progressLbl.text = "!"
                 progressLbl.hidden = false
-                if activityIndicator.isAnimating() { activityIndicator.stopAnimating() }
             }
-            else if !record.isDownloading {
-                // println("B")
-                playBtn.hidden = false
-                progressLbl.hidden = true
-                if activityIndicator.isAnimating() { activityIndicator.stopAnimating() }
-            }
-            else if let downloadingProgress = record.downloadingProgress {
-                // println("C")
-                let progressPercent = lroundf(downloadingProgress * 100)
-
+            else if record.isDownloading {
+                let progressPercent = lroundf(record.downloadingProgress! * 100)
                 progressLbl.text = "\(progressPercent)%"
-
                 progressLbl.hidden = false
-                if activityIndicator.isAnimating() { activityIndicator.stopAnimating() }
+            }
+            else if record.isStoredLocally {
+                playBtn.hidden = false
             }
             else {
-                // println("D")
-                if !activityIndicator.isAnimating() { activityIndicator.startAnimating() }
-                progressLbl.hidden = true
+                activityIndicator.startAnimating()
             }
         }
 

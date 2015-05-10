@@ -47,7 +47,7 @@ class Ajax: NSObject {
 
         :returns: NSURLSessionDataTask
     */
-    internal class func get(#url: NSURL,
+    internal static func get(#url: NSURL,
                     success: NSData->Void,
                     fail: NSError->Void)
                     -> NSURLSessionDataTask {
@@ -87,7 +87,7 @@ class Ajax: NSObject {
         dataTask.resume()
 
         return dataTask
-}
+    }
 
     /**
         Shorthand for Ajax.get(), but it proceeds only if was able to create url from string passed.
@@ -110,7 +110,7 @@ class Ajax: NSObject {
 
         :returns: NSURLSessionDataTask?
     */
-    internal class func getJsonByUrlString(urlString: String,
+    internal static func getJsonByUrlString(urlString: String,
                                     success: NSData->Void,
                                     fail: NSError->Void)
                                     -> NSURLSessionDataTask? {
@@ -149,7 +149,7 @@ class Ajax: NSObject {
 
         :returns: [AnyObject]?
     */
-    internal class func parseJsonArray(data: NSData,
+    internal static func parseJsonArray(data: NSData,
                                 error errorPointer: NSErrorPointer)
                                 -> [AnyObject]? {
         if let json = NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions(0), error: errorPointer) as? [AnyObject] {
@@ -190,7 +190,7 @@ class Ajax: NSObject {
 
         :returns: [String: AnyObject]?
     */
-    internal class func parseJsonDictionary(data: NSData,
+    internal static func parseJsonDictionary(data: NSData,
                                     error errorPointer: NSErrorPointer)
                                     -> [String: AnyObject]? {
 
@@ -240,7 +240,7 @@ class Ajax: NSObject {
 
         :returns: NSURLSessionDownloadTask
     */
-    internal class func downloadFileFromUrl(remoteURL: NSURL, saveTo localURL: NSURL,
+    internal static func downloadFileFromUrl(remoteURL: NSURL, saveTo localURL: NSURL,
                                     reportingProgress progressHandler: (Int64, Int64)->Void,
                                     reportingCompletion completionHandler: Void->Void,
                                     reportingFailure failureHandler: NSError->Void)
@@ -278,7 +278,7 @@ class Ajax: NSObject {
         :param: message: String Error description.
         :param: failureHandler: ( NSError->Void )? Failutre handler.
     */
-    private class func logError(code: ErrorCode,
+    private static func logError(code: ErrorCode,
                             withMessage message: String,
                             callFailureHandler fail: NSError->Void ) {
 

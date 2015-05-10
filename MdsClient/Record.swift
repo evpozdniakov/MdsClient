@@ -31,9 +31,20 @@ class Record: NSObject, NSCoding {
     // var isPlaying: Bool
 
     // #FIXME: how to store those vars?
+    var isDownloading: Bool {
+        return self.downloadingProgress != nil
+    }
     var downloadingProgress: Float?
     var downloadTask: NSURLSessionDownloadTask?
-    var isDownloading = false
+    var localURL: NSURL?
+    var isStoredLocally: Bool {
+        if let localURL = self.localURL,
+            path = localURL.path {
+                return NSFileManager.defaultManager().fileExistsAtPath(path)
+            }
+
+        return false
+    }
 
     // #MARK: - initializers
 
@@ -215,6 +226,23 @@ class Record: NSObject, NSCoding {
         }
     }
 
+    func deleteLocalCopy() {
+        if let localURL = localURL,
+            path = localURL.path {
+
+            var error: NSError?
+
+            NSFileManager.defaultManager().removeItemAtPath(path, error: &error)
+
+            if let error = error {
+                // #FIXME:
+            }
+        }
+        else {
+            // #FIXME:
+        }
+    }
+
     /**
         Will connect ios.bumagi.net to report broken record
 
@@ -257,12 +285,11 @@ extension Record: RecordDownload {
     */
     func startDownloading() {
         // println("call Playlist.startDownloading() for record: \(title)")
-        isDownloading = true
         getFirstPlayableTrack() { track in
             if let track = track {
                 // println("track found for record: \(self.title)")
                 // make sure the record is still in playlist
-                if self.isDownloading {
+                if DataModel.playlistContainsRecord(self) {
                     // println("record in still in playlist, start download track: \(track.url)")
                     self.downloadTrack(track)
                 }
@@ -273,7 +300,6 @@ extension Record: RecordDownload {
             else {
                 // println("---has no tracks for record: \(self.title)---")
                 self.hasNoTracks = true
-                self.isDownloading = false
                 // #FIXME: display this record with ! sign in playlist tab
                 // // no tracks found
                 // appDisplayError("Файл mp3 не найден на сервере.", inViewController: self) {
@@ -312,18 +338,20 @@ extension Record: RecordDownload {
         }
 
         if let fileName = track.url.lastPathComponent {
-            let localURL = documentDir.URLByAppendingPathComponent(fileName)
+            localURL = documentDir.URLByAppendingPathComponent(fileName)
 
-            downloadTask = Ajax.downloadFileFromUrl(track.url, saveTo: localURL,
+            downloadTask = Ajax.downloadFileFromUrl(track.url, saveTo: localURL!,
                 reportingProgress: reportDownloadingProgress,
                 reportingCompletion: {
                     // println("file dowloaded and may be saved")
                     // #FIXME: check if file has been saved to localURL
                     self.downloadTask = nil
+                    self.downloadingProgress = nil
                 },
                 reportingFailure: { error in
                     // println("downloadFileFromUrl error: \(error)")
                     // #FIXME: cover this case, maybe display [!] icon or alert the error
+                    self.downloadingProgress = nil
                  })
 
             // println("downloadTask created: \(downloadTask)")
@@ -356,13 +384,9 @@ extension Record: RecordDownload {
             record.cancelDownloading()
     */
     func cancelDownloading() {
-        isDownloading = false
-        println("set downloadingProgress nil!!!!!!!!!!!!!! record title: \(title)")
-        downloadingProgress = nil
+        // println("set downloadingProgress nil!!!!!!!!!!!!!! record title: \(title)")
 
-        if let downloadTask = downloadTask {
-            downloadTask.cancel()
-            self.downloadTask = nil
-        }
+        downloadTask?.cancel()
+        downloadTask = nil
     }
 }

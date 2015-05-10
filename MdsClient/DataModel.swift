@@ -2,8 +2,6 @@ import Foundation
 
 class DataModel: NSObject {
 
-    // #FIXME: why DataModel is not static? if yes we can avoid sending it to every controller.
-
     enum ErrorMessage: String {
         case UnableParseCatalogJson = "Произошла ошибка при загрузке каталога."
         case UnableGetCatalogJsonFromServer = "Сервер недоступен."
@@ -219,7 +217,8 @@ class DataModel: NSObject {
     }
 
     /**
-        Removes passed record from playlist array then asks record to cancel downloading.
+        Removes passed record from playlist array, asks record to cancel downloading.
+        Also removes local file if exists.
 
         Usage:
 
@@ -231,6 +230,7 @@ class DataModel: NSObject {
         if let index = find(playlist, record) {
             playlist.removeAtIndex(index)
             record.cancelDownloading()
+            record.deleteLocalCopy()
         }
         /* else {
             // it should never happen, but what if it does?
