@@ -13,6 +13,7 @@ class Playlist: UIViewController {
 
     var cellReloadTimer: NSTimer?
     var storedLocallyList: [Record]?
+    var hasNoTracksList: [Record]?
 
     @IBOutlet weak var playlistTable: UITableView!
 
@@ -25,12 +26,16 @@ class Playlist: UIViewController {
 
     override func viewWillAppear(animated: Bool) {
         super.viewWillAppear(animated)
-        println("playlist will appear")
 
+        // println("playlist will appear")
         storedLocallyList = [Record]()
+        hasNoTracksList = [Record]()
         for record in DataModel.playlist {
             if record.isStoredLocally {
                 storedLocallyList!.append(record)
+            }
+            else if record.hasNoTracks {
+                hasNoTracksList!.append(record)
             }
         }
 
@@ -44,9 +49,10 @@ class Playlist: UIViewController {
     override func viewDidDisappear(animated: Bool) {
         super.viewDidDisappear(animated)
 
-        println("playlist did disappear")
+        // println("playlist did disappear")
         stopCellReloadTimer()
         storedLocallyList = nil
+        hasNoTracksList = nil
     }
 
     // #MARK: - run/stop cell reloader
@@ -62,9 +68,9 @@ class Playlist: UIViewController {
     func runCellReloadTimer() {
         assert(cellReloadTimer == nil)
 
-        var i = NSTimeInterval(0.25)
+        let i = NSTimeInterval(0.25)
         cellReloadTimer = NSTimer.scheduledTimerWithTimeInterval(i, target: self, selector: Selector("reloadDownloadingRecordCells"), userInfo: nil, repeats: true)
-        println("schedule timer")
+        // println("schedule timer")
     }
 
     /**
@@ -81,7 +87,7 @@ class Playlist: UIViewController {
         if let cellReloadTimer = cellReloadTimer {
             cellReloadTimer.invalidate()
             self.cellReloadTimer = nil
-            println("invalidate timer")
+            // println("invalidate timer")
         }
     }
 
@@ -97,12 +103,19 @@ class Playlist: UIViewController {
     */
     func reloadDownloadingRecordCells() {
         assert(storedLocallyList != nil)
+        assert(hasNoTracksList != nil)
 
         var indexPaths = [NSIndexPath]()
 
         for (i, record) in enumerate(DataModel.playlist) {
             if record.isDownloading {
                 indexPaths.append(NSIndexPath(forRow: i, inSection: 0))
+            }
+            else if record.hasNoTracks && find(hasNoTracksList!, record) == nil {
+                // reload one last time
+                // println("-----------reload last one time row: \(i)")
+                indexPaths.append(NSIndexPath(forRow: i, inSection: 0))
+                hasNoTracksList!.append(record)
             }
             else if record.isStoredLocally && find(storedLocallyList!, record) == nil {
                 // reload one last time
@@ -114,7 +127,7 @@ class Playlist: UIViewController {
 
         redrawRecordsAtIndexPaths(indexPaths)
 
-        if storedLocallyList!.count == DataModel.playlist.count {
+        if storedLocallyList!.count + hasNoTracksList!.count == DataModel.playlist.count {
             // println("-------------stopCellReloadTimer")
             stopCellReloadTimer()
         }

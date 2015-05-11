@@ -335,14 +335,17 @@ class RemoteMp3Player: NSObject {
             // all fine
         }
         else if let error = error {
-            println("registering audio session error: \(error)")
+            // #FIXME:
+            // println("registering audio session error: \(error)")
         }
         else {
-            println("registering audio session unknown error")
+            // #FIXME:
+            // println("registering audio session unknown error")
         }
     }
 
     func throwErrorWithCode(error: PlaybackError) {
+        // #FIXME: replace with logError()
         let code = error.rawValue
         let msg = "Error with code \(code) raised in RemoteMp3Player"
 

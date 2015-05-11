@@ -115,8 +115,16 @@ class SearchCatalog: UIViewController {
 
                 // start playing record
                 DataModel.playingRecord = record
-                record.getFirstPlayableTrack() { track in
-                    if let track = track {
+
+                var error: NSError?
+
+                record.getFirstPlayableTrack(&error) { track in
+                    if let error = error {
+                        // println("!!!!!!retry to play record (make separate function startPlayingRecord")
+                        // #FIXME: retry to play record (make separate function startPlayingRecord)
+
+                    }
+                    else if let track = track {
                         self.player!.startPlayback(url: track.url)
                     }
                     else {

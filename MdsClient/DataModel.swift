@@ -14,7 +14,7 @@ class DataModel: NSObject {
         case PlistWasntSaved = 4
     }
 
-    static let errorDomain = "DataModel"
+    static let errorDomain = "DataModelClass"
 
     static var allRecords = [Record]()
     static var filteredRecords = [Record]()
@@ -77,10 +77,13 @@ class DataModel: NSObject {
 
                     if let json = Ajax.parseJsonArray(data, error: &error) {
                         self.fillRecordsWithJson(json)
-
                         // #TODO: send global notification to enable UI
+                        return
                     }
-                    else if let error = error {
+
+                    assert(error != nil)
+
+                    if let error = error {
                         reportError(ErrorMessage.UnableParseCatalogJson.rawValue)
                     }
                 },
@@ -265,8 +268,7 @@ class DataModel: NSObject {
     static func getDataFilePath() -> String? {
         if let documentsDir = documementsDirectory() {
             let filePath = documentsDir.stringByAppendingPathComponent("DataModel.plist")
-            println("filePath:\(filePath)")
-
+            // println("filePath:\(filePath)")
             return filePath
         }
 

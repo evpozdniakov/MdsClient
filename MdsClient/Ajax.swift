@@ -8,7 +8,7 @@
 import Foundation
 
 class Ajax: NSObject {
-    static let errorDomain = "Ajax"
+    static let errorDomain = "AjaxClass"
 
     enum ErrorCode : Int {
         case NoResponseFromServer = 1
@@ -48,9 +48,9 @@ class Ajax: NSObject {
         :returns: NSURLSessionDataTask
     */
     internal static func get(#url: NSURL,
-                    success: NSData->Void,
-                    fail: NSError->Void)
-                    -> NSURLSessionDataTask {
+                            success: NSData->Void,
+                            fail: NSError->Void)
+                            -> NSURLSessionDataTask {
         // println("call Ajax.get() with url: \(url)")
         let session = NSURLSession.sharedSession()
         let dataTask = session.dataTaskWithURL(url) { data, response, error in
@@ -111,9 +111,9 @@ class Ajax: NSObject {
         :returns: NSURLSessionDataTask?
     */
     internal static func getJsonByUrlString(urlString: String,
-                                    success: NSData->Void,
-                                    fail: NSError->Void)
-                                    -> NSURLSessionDataTask? {
+                                            success: NSData->Void,
+                                            fail: NSError->Void)
+                                            -> NSURLSessionDataTask? {
         // println("call getJsonByUrlString with urlString: \(urlString)")
         if let url = NSURL(string:urlString) {
             // println("url is correct")
@@ -150,14 +150,17 @@ class Ajax: NSObject {
         :returns: [AnyObject]?
     */
     internal static func parseJsonArray(data: NSData,
-                                error errorPointer: NSErrorPointer)
-                                -> [AnyObject]? {
-        if let json = NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions(0), error: errorPointer) as? [AnyObject] {
+                                        error errorPointer: NSErrorPointer)
+                                        -> [AnyObject]? {
+        var error: NSError?
+
+        if let json = NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions(0), error: &error) as? [AnyObject] {
             return json
         }
 
-        if let error = errorPointer.memory {
+        if let error = error {
             // Cocoa error 3840: JSON text did not start with array or object and option to allow fragments not set
+            errorPointer.memory = error
             appLogError(error, withMessage: "JSON text did not start with array or object")
         }
         else {
@@ -191,15 +194,17 @@ class Ajax: NSObject {
         :returns: [String: AnyObject]?
     */
     internal static func parseJsonDictionary(data: NSData,
-                                    error errorPointer: NSErrorPointer)
-                                    -> [String: AnyObject]? {
+                                            error errorPointer: NSErrorPointer)
+                                            -> [String: AnyObject]? {
+        var error: NSError?
 
-        if let json = NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions(0), error: errorPointer) as? [String: AnyObject] {
+        if let json = NSJSONSerialization.JSONObjectWithData(data, options: NSJSONReadingOptions(0), error: &error) as? [String: AnyObject] {
             return json
         }
 
-        if let error = errorPointer.memory {
+        if let error = error {
             // Cocoa error 3840: JSON text did not start with array or object and option to allow fragments not set
+            errorPointer.memory = error
             appLogError(error, withMessage: "JSON text did not start with array or object")
         }
         else {
@@ -241,10 +246,10 @@ class Ajax: NSObject {
         :returns: NSURLSessionDownloadTask
     */
     internal static func downloadFileFromUrl(remoteURL: NSURL, saveTo localURL: NSURL,
-                                    reportingProgress progressHandler: (Int64, Int64)->Void,
-                                    reportingCompletion completionHandler: Void->Void,
-                                    reportingFailure failureHandler: NSError->Void)
-                                    -> NSURLSessionDownloadTask {
+                                            reportingProgress progressHandler: (Int64, Int64)->Void,
+                                            reportingCompletion completionHandler: Void->Void,
+                                            reportingFailure failureHandler: NSError->Void)
+                                            -> NSURLSessionDownloadTask {
         // println("call downloadFileFromUrl(), url: \(remoteURL), save to: \(localURL)")
         let ajax = Ajax()
         let configuration = NSURLSessionConfiguration.defaultSessionConfiguration()
@@ -279,8 +284,8 @@ class Ajax: NSObject {
         :param: failureHandler: ( NSError->Void )? Failutre handler.
     */
     private static func logError(code: ErrorCode,
-                            withMessage message: String,
-                            callFailureHandler fail: NSError->Void ) {
+                                withMessage message: String,
+                                callFailureHandler fail: NSError->Void ) {
 
         let error = NSError(domain: errorDomain, code: code.rawValue, userInfo: nil)
         appLogError(error, withMessage: message, callFailureHandler: fail)
@@ -324,7 +329,7 @@ extension Ajax: NSURLSessionDownloadDelegate {
 
     func URLSession(session: NSURLSession, task: NSURLSessionTask, didCompleteWithError error: NSError?) {
         if let error = error {
-            appLogError(error, withMessage: "NSURLSessionDownloadTask error.", callFailureHandler: failureHandler)
+            appLogError(error, withMessage: "NSURLSessionDownloadTask error for URL [\(task.originalRequest.URL)].", callFailureHandler: failureHandler)
         }
     }
 }

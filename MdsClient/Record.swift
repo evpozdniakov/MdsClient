@@ -19,6 +19,19 @@ class Record: NSObject, NSCoding {
         "following": 2
     */
 
+    static let errorDomain = "RecordClass"
+
+    enum ErrorCode: Int {
+        case CantCreateUrlFromString = 1
+        case UnableToMakeTrackFromJson = 2
+        case UnableToParseJsonEntryAsDictionary = 3
+        case TrackUrlHasNoFileName = 4
+        case CantRemoveLocallyStoredFile = 5
+        case LocalUrlIsNil = 6
+        case DocumentDirsIsEmpty = 7
+        case TrackUrlHasNoExtension = 8
+    }
+
     var id: Int
     var author: String
     var title: String
@@ -27,16 +40,15 @@ class Record: NSObject, NSCoding {
     var station: String
     var tracks: [Track]
     var hasNoTracks: Bool
+    var localURL: NSURL?
 
-    // var isPlaying: Bool
+    // #TODO: think how to store those vars?
+    var downloadingProgress: Float?
+    var downloadTask: NSURLSessionDownloadTask?
 
-    // #FIXME: how to store those vars?
     var isDownloading: Bool {
         return self.downloadingProgress != nil
     }
-    var downloadingProgress: Float?
-    var downloadTask: NSURLSessionDownloadTask?
-    var localURL: NSURL?
     var isStoredLocally: Bool {
         if let localURL = self.localURL,
             path = localURL.path {
@@ -45,6 +57,8 @@ class Record: NSObject, NSCoding {
 
         return false
     }
+
+    var downloadTrackRetryCounter = 0
 
     // #MARK: - initializers
 
@@ -57,15 +71,18 @@ class Record: NSObject, NSCoding {
         self.station = station
         self.tracks = tracks
         self.hasNoTracks = hasNoTracks
-        // self.isPlaying = false
     }
 
+    /**
+        We call this initializer from DataModel.fillRecordsWithJson().
+        Method calls main initializer with two more properties: tracks & hasNoTracks.
+    */
     convenience init(id: Int, author: String, title: String, readDate dateString: String, station: String) {
         var readDate: NSDate?
         var year = ""
         let tracks = [Track]()
         let hasNoTracks = false
-        // let isPlaying = false
+        var localURL: NSURL?
         let dateFormatter = NSDateFormatter()
 
         dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssxxx" /*find out and place date format from http://userguide.icu-project.org/formatparse/datetime*/
@@ -88,7 +105,7 @@ class Record: NSObject, NSCoding {
         station = aDecoder.decodeObjectForKey("Station") as! String
         tracks = aDecoder.decodeObjectForKey("Tracks") as! [Track]
         hasNoTracks = aDecoder.decodeBoolForKey("HasNoTracks")
-        // isPlaying = aDecoder.decodeBoolForKey("IsPlaying")
+        localURL = aDecoder.decodeObjectForKey("LocalURL") as! NSURL?
 
         super.init()
     }
@@ -102,37 +119,78 @@ class Record: NSObject, NSCoding {
         aCoder.encodeObject(station, forKey: "Station")
         aCoder.encodeObject(tracks, forKey: "Tracks")
         aCoder.encodeBool(hasNoTracks, forKey: "HasNoTracks")
-        // aCoder.encodeBool(isPlaying, forKey: "IsPlaying")
+        aCoder.encodeObject(localURL, forKey: "LocalURL")
     }
 
     // #MARK: - work with tracks
 
     // if the record has tracks, returns first track with http protocol
     // otherwise initializes tracks json downloading/parsing
-    func getFirstPlayableTrack(completionHandler: (Track?) -> Void) {
-        println("call Playlist.getFirstPlayableTrack() ")
-        if hasNoTracks {
-            println("has no track")
-            completionHandler(nil)
-        }
-        else if tracks.count > 0 {
-            println("tracks exist, no need to download")
-            completionHandler(getAnyTrackWithHttpProtocol())
-        }
-        else {
-            downloadAndParseTracksJson() {
-                if self.tracks.count > 0 {
-                    println("tracks has been downloaded: \(self.tracks)")
-                    completionHandler(self.getAnyTrackWithHttpProtocol())
+
+    /**
+        The goal is to return first playable record track. (Playable means one with http or https protocol.)
+        If record doesn't have tracks information yet, will download then parse tracks json.
+
+        **Warning:** Might work asynchronously.
+
+        Usage:
+
+            var error: NSError?
+            getFirstPlayableTrack(&error) { track in
+                if let error = error {
+                    // fail code
                 }
                 else {
-                    completionHandler(nil)
+                    // success code
+                }
+            }
+
+        :param: completionHandler: (Track?, NSError?)->Void Completion handler.
+    */
+    internal func getFirstPlayableTrack(completionHandler: (Track?, NSError?)->Void) {
+        println("call Playlist.getFirstPlayableTrack() ")
+        if hasNoTracks {
+            // println("has no track")
+            completionHandler(nil, nil)
+        }
+        else if tracks.count > 0 {
+            // println("tracks exist, no need to download")
+            completionHandler(getAnyTrackWithHttpProtocol(), nil)
+        }
+        else {
+            downloadAndParseTracksJson() { tracks, error in
+                if let tracks = tracks {
+                    if tracks.count == 0 {
+                        self.hasNoTracks = true
+                    }
+
+                    getFirstPlayableTrack(completionHandler)
+                }
+                else if let error = error {
+                    // println("call completionHandler with error: \(error)")
+                    completionHandler(nil, error)
+                    // I stopped here last time
                 }
             }
         }
     }
 
-    func getAnyTrackWithHttpProtocol() -> Track? {
+    /**
+        Loops through record tracks looking for the url type http or https.
+        Returns first track found with needed scheme.
+        Otherwise returns nil and calls reportBroken().
+
+        **Warning:** Record tracks must be non empty array.
+
+        Usage:
+
+            let track = getAnyTrackWithHttpProtocol()
+
+        :returns: Track?
+    */
+    private func getAnyTrackWithHttpProtocol() -> Track? {
+        assert(tracks.count > 0)
+
         for track in tracks {
             let scheme = track.url.scheme
 
@@ -141,14 +199,24 @@ class Record: NSObject, NSCoding {
             }
         }
 
-        println("call reportBroken 1")
+        // println("call reportBroken 1")
         reportBroken()
 
         return nil
     }
 
     // will parse json and fill tracks
-    func fillTracksWithJson(json: [AnyObject]) {
+    /**
+        Given by JSON [AnyObject], function goes through entries and creates record.tracks array.
+        If function was unable to create single track, it reports broken record.
+
+        Usage:
+
+            fillTracksWithJson(json)
+
+        :param: json: [AnyObject] JSON with record tracks.
+    */
+    private func fillTracksWithJson(json: [AnyObject]) {
         var tracks = [Track]()
 
         for entry in json {
@@ -162,25 +230,25 @@ class Record: NSObject, NSCoding {
                 // url = "http://mds.mds-club.ru/Kir_Bulychev_-_Oni_uzhe_zdes'!.mp3";
 
                 if let id = entry["id"] as? Int,
-                    let bitrate = entry["bitrate"] as? String,
-                    let channels = entry["channels"] as? String,
-                    let mode = entry["mode"] as? String,
-                    let size = entry["size"] as? Int,
-                    let urlString = entry["url"] as? String {
+                    bitrate = entry["bitrate"] as? String,
+                    channels = entry["channels"] as? String,
+                    mode = entry["mode"] as? String,
+                    size = entry["size"] as? Int,
+                    urlString = entry["url"] as? String {
                         if let url = NSURL(string:urlString) {
                             let track = Track(id: id, bitrate: bitrate, channels: channels, mode: mode, size: size, url: url)
                             tracks.append(track)
                         }
                         else {
-                            // #FIXME: problem with creaing url
+                            Record.logError(.CantCreateUrlFromString, withMessage: "Cant create track URL from string [\(urlString)]", callFailureHandler: nil)
                         }
                 }
                 else {
-                    // #FIXME: unable to parse json entry
+                    Record.logError(.UnableToMakeTrackFromJson, withMessage: "Unable to make Track from json [\(entry)]", callFailureHandler: nil)
                 }
             }
             else {
-                // #FIXME: unable to parse json
+                Record.logError(.UnableToParseJsonEntryAsDictionary, withMessage: "Unable to parse JSON entry as dictionary [\(entry)]", callFailureHandler: nil)
             }
         }
 
@@ -188,16 +256,35 @@ class Record: NSObject, NSCoding {
             self.tracks = tracks
         }
         else {
-            println("call reportBroken 2")
             reportBroken()
         }
     }
 
-    // ASYNC
-    // downloads record tracks json data
-    // when done,
-    func downloadAndParseTracksJson(completionHandler: Void -> Void) {
-        println("call downloadAndParseTracksJson")
+    /**
+        Will call mds-club API for record tracks json.
+        If server response succeeded, will parse the json and pass it to fillTracksWithJson().
+        If server response failed, will retry to call itself (up to 3 times).
+
+        If not succeeded after three retries, reports error.
+
+        **Warning:** Works asynchronously.
+
+        Usage:
+
+            var error: NSError?
+            downloadAndParseTracksJson(&error) { tracks in
+                if let error = error {
+                    // failure
+                }
+                else {
+                    // success
+                }
+            }
+
+        :param: completionHandler: ([Track]?, NSError?)->Void
+    */
+    private func downloadAndParseTracksJson(completionHandler: ([Track]?, NSError?)->Void) {
+        // println("call downloadAndParseTracksJson")
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
             // println("dispatch async")
             let urlString = "http://core.mds-club.ru/api/v1.0/mds/records/\(self.id)/files/?access-token=" + Access.generateToken()
@@ -213,15 +300,13 @@ class Record: NSObject, NSCoding {
                     }
                     else if let error = error {
                         // println("call reportBroken 3")
-                        // #FIXME: report the problem
                         self.reportBroken()
                     }
 
-                    completionHandler()
+                    completionHandler(self.tracks, error)
                 },
                 fail: { error in
-                    // println("++++++++++retry")
-                    self.downloadAndParseTracksJson(completionHandler)
+                    completionHandler(nil, error)
                 })
         }
     }
@@ -235,22 +320,22 @@ class Record: NSObject, NSCoding {
             NSFileManager.defaultManager().removeItemAtPath(path, error: &error)
 
             if let error = error {
-                // #FIXME:
+                Record.logError(.CantRemoveLocallyStoredFile, withMessage: "Can't remove file storred locally: [\(localURL)]", callFailureHandler: nil)
             }
         }
         else {
-            // #FIXME:
+            Record.logError(.LocalUrlIsNil, withMessage: "Local url is nil for some reason, record title: [\(title)]", callFailureHandler: nil)
         }
     }
 
     /**
-        Will connect ios.bumagi.net to report broken record
+        Will connect ios.bumagi.net to report broken record.
 
         Usage:
 
             reportBroken()
     */
-    func reportBroken() {
+    private func reportBroken() {
         hasNoTracks = true
 
         if let escapedTitle = title.stringByAddingPercentEscapesUsingEncoding(NSUTF8StringEncoding) {
@@ -258,23 +343,46 @@ class Record: NSObject, NSCoding {
 
             if let url = NSURL(string: urlString) {
                 Ajax.get(url: url,
-                        success: { data in
-                            println("broken record reported with url: \(url)")
-                        },
-                        fail: { error in
-                            // #FIXME: report error
-                        })
+                    success: { data in
+                        // println("broken record reported with url: \(url)")
+                    },
+                    fail: { error in
+                        // error has been reported in Ajax.swift
+                    })
             }
             else {
-                println("cant create URL with \(urlString)")
+                Record.logError(.CantCreateUrlFromString, withMessage: "Cant create NSURL from string [\(urlString)]", callFailureHandler: nil)
             }
         }
+    }
+
+    // #MARK: helpers
+
+    /**
+        Will create error:NSError and call generic function logError()
+
+        **Warning:** Static method.
+
+        Usage:
+
+            logError(.NoResponseFromServer, withMessage: "Server didn't return any response.", callFailureHandler: fail)
+
+        :param: code: ErrorCode Error code.
+        :param: message: String Error description.
+        :param: failureHandler: ( NSError->Void )? Failutre handler.
+    */
+    private static func logError(code: ErrorCode,
+                                withMessage message: String,
+                                callFailureHandler fail: (NSError->Void)? ) {
+
+        let error = NSError(domain: errorDomain, code: code.rawValue, userInfo: nil)
+        appLogError(error, withMessage: message, callFailureHandler: fail)
     }
 }
 
 extension Record: RecordDownload {
     /**
-        Mark record as downloading, gets first track and initiates track downloading.
+        Gets first track and initiates track downloading.
         Marks record as hasNotTracks if no tracks found.
 
         **Warning:** Works asynchronously.
@@ -284,26 +392,39 @@ extension Record: RecordDownload {
             startDownloading()
     */
     func startDownloading() {
-        // println("call Playlist.startDownloading() for record: \(title)")
-        getFirstPlayableTrack() { track in
-            if let track = track {
+        println("call Playlist.startDownloading() for record: \(title)")
+        var error: NSError?
+
+        getFirstPlayableTrack(&error) { track in
+            if let error = error {
+                if self.downloadTrackRetryCounter < 3 {
+                    let i = NSTimeInterval(1)
+                    NSTimer.scheduledTimerWithTimeInterval(i, target: self, selector: Selector("startDownloading"), userInfo: nil, repeats: false)
+                    self.downloadTrackRetryCounter++
+                    println("------- schedule retry \(self.downloadTrackRetryCounter)")
+                }
+                else {
+                    println("---------- no tracks after 3 retries.")
+                    self.hasNoTracks = true
+                }
+            }
+            else if let track = track {
                 // println("track found for record: \(self.title)")
                 // make sure the record is still in playlist
                 if DataModel.playlistContainsRecord(self) {
                     // println("record in still in playlist, start download track: \(track.url)")
                     self.downloadTrack(track)
                 }
-                else {
+                /* else {
                     // println("it looks like the record is not in playlist any more")
-                }
+                } */
             }
             else {
                 // println("---has no tracks for record: \(self.title)---")
                 self.hasNoTracks = true
-                // #FIXME: display this record with ! sign in playlist tab
-                // // no tracks found
-                // appDisplayError("Файл mp3 не найден на сервере.", inViewController: self) {
-                //     self.redrawRecordsAtIndexPaths([indexPath])
+                // #TODO: the problem, Record.swift is not a controller, so it can't use appDisplayError, cause it requires inViewController.
+                // #TODO: another problem - how to reload table cell?
+                // appDisplayError("Аудио-файл не найден на сервере.", inViewController: self) {
                 // }
             }
         }
@@ -324,16 +445,14 @@ extension Record: RecordDownload {
         let documentDirs = fileManager.URLsForDirectory(.DocumentDirectory, inDomains: .UserDomainMask)
 
         if documentDirs.count == 0 {
-            // #FIXME: handle the error
-            // println("Error: NSFileManager didn't find document directory")
+            Record.logError(.DocumentDirsIsEmpty, withMessage: "File manager returned empty document directory array.", callFailureHandler: nil)
             return
         }
 
         let documentDir = documentDirs[0] as! NSURL
 
         if track.url.pathExtension == "" {
-            // #FIXME:handle error
-            // println("Error: file path [\(track.url)] doesn't have file name")
+            Record.logError(.TrackUrlHasNoExtension, withMessage: "Track url [\(track.url)] has no extension.", callFailureHandler: nil)
             return
         }
 
@@ -349,16 +468,14 @@ extension Record: RecordDownload {
                     self.downloadingProgress = nil
                 },
                 reportingFailure: { error in
-                    // println("downloadFileFromUrl error: \(error)")
-                    // #FIXME: cover this case, maybe display [!] icon or alert the error
+                    // #FIXME: retry up to 3 times.
                     self.downloadingProgress = nil
                  })
 
             // println("downloadTask created: \(downloadTask)")
         }
         else {
-            // #FIXME: handle the error
-            // println("Error: lastPathComponent is empty or nil")
+            Record.logError(.TrackUrlHasNoFileName, withMessage: "Track url [\(track.url)] has no file name.", callFailureHandler: nil)
         }
     }
 
