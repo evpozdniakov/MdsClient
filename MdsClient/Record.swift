@@ -38,7 +38,7 @@ class Record: NSObject, NSCoding {
     var readDate: NSDate?
     var year: String
     var station: String
-    var tracks: [Track]
+    var tracks: [Track]?
     var hasNoTracks: Bool
     var localURL: NSURL?
 
@@ -62,7 +62,7 @@ class Record: NSObject, NSCoding {
 
     // #MARK: - initializers
 
-    init(id: Int, author: String, title: String, readDate: NSDate?, year: String, station: String, tracks: [Track], hasNoTracks: Bool) {
+    init(id: Int, author: String, title: String, readDate: NSDate?, year: String, station: String, tracks: [Track]?, hasNoTracks: Bool) {
         self.id = id
         self.author = author
         self.title = title
@@ -80,7 +80,7 @@ class Record: NSObject, NSCoding {
     convenience init(id: Int, author: String, title: String, readDate dateString: String, station: String) {
         var readDate: NSDate?
         var year = ""
-        let tracks = [Track]()
+        var tracks: [Track]?
         let hasNoTracks = false
         var localURL: NSURL?
         let dateFormatter = NSDateFormatter()
@@ -100,12 +100,12 @@ class Record: NSObject, NSCoding {
         id = aDecoder.decodeIntegerForKey("Id")
         author = aDecoder.decodeObjectForKey("Author") as! String
         title = aDecoder.decodeObjectForKey("Title") as! String
-        readDate = aDecoder.decodeObjectForKey("ReadDate") as! NSDate?
+        readDate = aDecoder.decodeObjectForKey("ReadDate") as? NSDate
         year = aDecoder.decodeObjectForKey("Year") as! String
         station = aDecoder.decodeObjectForKey("Station") as! String
-        tracks = aDecoder.decodeObjectForKey("Tracks") as! [Track]
+        tracks = aDecoder.decodeObjectForKey("Tracks") as? [Track]
         hasNoTracks = aDecoder.decodeBoolForKey("HasNoTracks")
-        localURL = aDecoder.decodeObjectForKey("LocalURL") as! NSURL?
+        localURL = aDecoder.decodeObjectForKey("LocalURL") as? NSURL
 
         super.init()
     }
@@ -124,9 +124,6 @@ class Record: NSObject, NSCoding {
 
     // #MARK: - work with tracks
 
-    // if the record has tracks, returns first track with http protocol
-    // otherwise initializes tracks json downloading/parsing
-
     /**
         The goal is to return first playable record track. (Playable means one with http or https protocol.)
         If record doesn't have tracks information yet, will download then parse tracks json.
@@ -135,8 +132,7 @@ class Record: NSObject, NSCoding {
 
         Usage:
 
-            var error: NSError?
-            getFirstPlayableTrack(&error) { track in
+            getFirstPlayableTrack() { track, error in
                 if let error = error {
                     // fail code
                 }
@@ -148,49 +144,49 @@ class Record: NSObject, NSCoding {
         :param: completionHandler: (Track?, NSError?)->Void Completion handler.
     */
     internal func getFirstPlayableTrack(completionHandler: (Track?, NSError?)->Void) {
-        println("call Playlist.getFirstPlayableTrack() ")
-        if hasNoTracks {
-            // println("has no track")
-            completionHandler(nil, nil)
-        }
-        else if tracks.count > 0 {
-            // println("tracks exist, no need to download")
-            completionHandler(getAnyTrackWithHttpProtocol(), nil)
+        // println("call Playlist.getFirstPlayableTrack() ")
+        if let tracks = tracks {
+            // tracks has been downloaded earlier
+            completionHandler(getAnyTrackWithHttpProtocol(tracks), nil)
         }
         else {
+            // will download record tracks first
             downloadAndParseTracksJson() { tracks, error in
-                if let tracks = tracks {
-                    if tracks.count == 0 {
-                        self.hasNoTracks = true
-                    }
+                let e = NSError(domain: Record.errorDomain, code: 928371837, userInfo: nil)
+                completionHandler(nil, e)
+                return
 
-                    getFirstPlayableTrack(completionHandler)
-                }
-                else if let error = error {
-                    // println("call completionHandler with error: \(error)")
+                if let error = error {
                     completionHandler(nil, error)
-                    // I stopped here last time
+                }
+                else if let tracks = tracks {
+                    self.tracks = tracks
+                    self.getFirstPlayableTrack(completionHandler)
+                }
+                else {
+                    // must never happen
+                    assert(false)
                 }
             }
         }
     }
 
     /**
-        Loops through record tracks looking for the url type http or https.
+        Loops through tracks array looking for the url type http or https.
         Returns first track found with needed scheme.
-        Otherwise returns nil and calls reportBroken().
+        Otherwise returns nil.
 
         **Warning:** Record tracks must be non empty array.
 
         Usage:
 
-            let track = getAnyTrackWithHttpProtocol()
+            let track = getAnyTrackWithHttpProtocol(tracks)
+
+        :param: tracks [Track] Array of tracks to go through.
 
         :returns: Track?
     */
-    private func getAnyTrackWithHttpProtocol() -> Track? {
-        assert(tracks.count > 0)
-
+    private func getAnyTrackWithHttpProtocol(tracks: [Track]) -> Track? {
         for track in tracks {
             let scheme = track.url.scheme
 
@@ -199,25 +195,27 @@ class Record: NSObject, NSCoding {
             }
         }
 
-        // println("call reportBroken 1")
-        reportBroken()
-
         return nil
     }
 
-    // will parse json and fill tracks
     /**
-        Given by JSON [AnyObject], function goes through entries and creates record.tracks array.
-        If function was unable to create single track, it reports broken record.
+        Given by JSON [AnyObject], function goes through entries, creates and returns tracks array.
+        If there was no errors during parsing, will return the array even if it has no tracks.
+        Otherwise return nil.
+
+        **Warning:** Might return empty array.
 
         Usage:
 
-            fillTracksWithJson(json)
+            getTacksFromJson(json)
 
         :param: json: [AnyObject] JSON with record tracks.
+
+        :returns: [Track]?
     */
-    private func fillTracksWithJson(json: [AnyObject]) {
+    private func getTacksFromJson(json: [AnyObject]) -> [Track]? {
         var tracks = [Track]()
+        var isErrorCase = false
 
         for entry in json {
             if let entry = entry as? [String: AnyObject] {
@@ -235,44 +233,47 @@ class Record: NSObject, NSCoding {
                     mode = entry["mode"] as? String,
                     size = entry["size"] as? Int,
                     urlString = entry["url"] as? String {
-                        if let url = NSURL(string:urlString) {
-                            let track = Track(id: id, bitrate: bitrate, channels: channels, mode: mode, size: size, url: url)
-                            tracks.append(track)
-                        }
-                        else {
-                            Record.logError(.CantCreateUrlFromString, withMessage: "Cant create track URL from string [\(urlString)]", callFailureHandler: nil)
-                        }
+
+                    if let url = NSURL(string:urlString) {
+                        let track = Track(id: id, bitrate: bitrate, channels: channels, mode: mode, size: size, url: url)
+                        tracks.append(track)
+                    }
+                    else {
+                        Record.logError(.CantCreateUrlFromString, withMessage: "Cant create track URL from string [\(urlString)]", callFailureHandler: nil)
+                        isErrorCase = true
+                    }
                 }
                 else {
                     Record.logError(.UnableToMakeTrackFromJson, withMessage: "Unable to make Track from json [\(entry)]", callFailureHandler: nil)
+                    isErrorCase = true
                 }
             }
             else {
                 Record.logError(.UnableToParseJsonEntryAsDictionary, withMessage: "Unable to parse JSON entry as dictionary [\(entry)]", callFailureHandler: nil)
+                isErrorCase = true
             }
         }
 
-        if tracks.count > 0 {
-            self.tracks = tracks
+        if isErrorCase {
+            return nil
         }
-        else {
-            reportBroken()
-        }
+
+        return tracks
     }
 
     /**
         Will call mds-club API for record tracks json.
-        If server response succeeded, will parse the json and pass it to fillTracksWithJson().
-        If server response failed, will retry to call itself (up to 3 times).
+        If server response succeeded, will parse the json and pass it to getTacksFromJson().
+        If tracks parsed without error, will call completion handler with tracks array.
+        The array might be empty.
 
-        If not succeeded after three retries, reports error.
+        If server didn't response or json parse failed, will call completion handler with error.
 
-        **Warning:** Works asynchronously.
+        **Warning:** Works in separate thread. Works asynchronously. Resulting tracks array might be empty.
 
         Usage:
 
-            var error: NSError?
-            downloadAndParseTracksJson(&error) { tracks in
+            downloadAndParseTracksJson() { tracks, error in
                 if let error = error {
                     // failure
                 }
@@ -294,16 +295,18 @@ class Record: NSObject, NSCoding {
                     // println("clojure with data: \(data)")
                     var error: NSError?
 
-                    if let json = Ajax.parseJsonArray(data, error: &error) {
-                        // println("will call fillTracksWithJson")
-                        self.fillTracksWithJson(json)
+                    if let json = Ajax.parseJsonArray(data, error: &error),
+                        tracks = self.getTacksFromJson(json) {
+
+                        completionHandler(tracks, nil)
                     }
                     else if let error = error {
-                        // println("call reportBroken 3")
-                        self.reportBroken()
+                        completionHandler(nil, error)
                     }
-
-                    completionHandler(self.tracks, error)
+                    else {
+                        // must never happen
+                        assert(false)
+                    }
                 },
                 fail: { error in
                     completionHandler(nil, error)
@@ -336,8 +339,6 @@ class Record: NSObject, NSCoding {
             reportBroken()
     */
     private func reportBroken() {
-        hasNoTracks = true
-
         if let escapedTitle = title.stringByAddingPercentEscapesUsingEncoding(NSUTF8StringEncoding) {
             let urlString = "http://ios.bumagi.net/api/mds-broken-track.php?rid=\(id)&title=\(escapedTitle)"
 
@@ -393,13 +394,11 @@ extension Record: RecordDownload {
     */
     func startDownloading() {
         println("call Playlist.startDownloading() for record: \(title)")
-        var error: NSError?
-
-        getFirstPlayableTrack(&error) { track in
+        getFirstPlayableTrack() { track, error in
             if let error = error {
                 if self.downloadTrackRetryCounter < 3 {
-                    let i = NSTimeInterval(1)
-                    NSTimer.scheduledTimerWithTimeInterval(i, target: self, selector: Selector("startDownloading"), userInfo: nil, repeats: false)
+                    // let i = NSTimeInterval(0.25)
+                    NSTimer.scheduledTimerWithTimeInterval(1.0, target: self, selector: Selector("startDownloading"), userInfo: nil, repeats: true)
                     self.downloadTrackRetryCounter++
                     println("------- schedule retry \(self.downloadTrackRetryCounter)")
                 }

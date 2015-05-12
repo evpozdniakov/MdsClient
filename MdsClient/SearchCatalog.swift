@@ -118,11 +118,10 @@ class SearchCatalog: UIViewController {
 
                 var error: NSError?
 
-                record.getFirstPlayableTrack(&error) { track in
+                record.getFirstPlayableTrack() { track, error in
                     if let error = error {
                         // println("!!!!!!retry to play record (make separate function startPlayingRecord")
                         // #FIXME: retry to play record (make separate function startPlayingRecord)
-
                     }
                     else if let track = track {
                         self.player!.startPlayback(url: track.url)
@@ -210,6 +209,10 @@ extension SearchCatalog: RemoteMp3PlayerDelegate {
 
             redrawRecordsAtIndexPaths([indexPath])
         }
+    }
+
+    func remoteMp3Player(player: RemoteMp3Player, raisedError error: NSError, withMessage message: String) {
+        appLogError(error, withMessage: message)
     }
 }
 
