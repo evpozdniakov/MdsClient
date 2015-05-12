@@ -8,16 +8,23 @@
 
 import UIKit
 
+// #TODO: detect current view controller in place and avoid passing it as parameter
 /**
-    Displays error message
+    Displays error custom message to the user as an alert.
+    Calls handler when user closes alert dialog.
 
     Usage:
 
         appDisplayError("Message text", withHandler: nil, inViewController: self)
+
+    :param: message: String Custom error message.
+    :param: inViewController: UIViewController The controller which user sees.
 */
-internal func appDisplayError(message: String, inViewController viewCtlr: UIViewController, withHandler handler: (Void -> Void)?) {
+internal func appDisplayError(message: String,
+                                inViewController viewCtlr: UIViewController,
+                                withHandler handler: (Void -> Void)?) {
     let alert = UIAlertController(
-        title: "Ошибка!",
+        title: "Error!",
         message: message,
         preferredStyle: .Alert
     )
@@ -36,13 +43,37 @@ internal func appDisplayError(message: String, inViewController viewCtlr: UIView
     viewCtlr.presentViewController(alert, animated: true, completion: nil)
 }
 
+/**
+    Will log passed error (domain, code, message) and call failure handler if provided.
+
+    **Warning:** If you don't have failure handler, use appLogError:withMessage:
+
+    Usage:
+
+        appLogError(err, withMessage: msg, callFailureHandler: fail)
+
+    :param: error: NSError The error.
+    :param: withMessage: String Error custom message.
+    :param: callFailureHandler: ( NSError->Void )? Failure handler.
+*/
 internal func appLogError(error: NSError, withMessage message: String, callFailureHandler fail: ( NSError->Void )?) {
     appLogError(error, withMessage: message)
+
     if let fail = fail {
         fail(error)
     }
 }
 
+/**
+    Will log passed error (domain, code, message).
+
+    Usage:
+
+        appLogError(error, withMessage: "Error custom message.")
+
+    :param: error: NSError The error.
+    :param: withMessage: String Error custom message.
+*/
 internal func appLogError(error: NSError, withMessage message: String) {
     println(" ")
     println("ERROR [ \(error.domain): \(error.code) ]")

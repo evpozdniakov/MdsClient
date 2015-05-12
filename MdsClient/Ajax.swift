@@ -8,8 +8,6 @@
 import Foundation
 
 class Ajax: NSObject {
-    static let errorDomain = "AjaxClass"
-
     enum ErrorCode : Int {
         case NoResponseFromServer = 1
         case UnexpectedResponseCode = 2
@@ -18,12 +16,16 @@ class Ajax: NSObject {
         case CantCastJSONToDictionary = 5
     }
 
+    static let errorDomain = "AjaxClass"
+
     var downloadTask: NSURLSessionDownloadTask?
     var localURL: NSURL?
 
     var progressHandler: ( (Int64, Int64)->Void )?
     var completionHandler: ( Void->Void )?
     var failureHandler: ( NSError->Void )?
+
+    // #MARK: get request
 
     /**
         Creates NSURLSessionDataTask which sends http get request to url
@@ -71,13 +73,13 @@ class Ajax: NSObject {
 
             if httpResponse == nil || httpResponse!.statusCode == 500 {
                 // Server didn't return any response
-                self.logError(.NoResponseFromServer, withMessage: "Server didn't return any response.", callFailureHandler: fail)
+                Ajax.logError(.NoResponseFromServer, withMessage: "Server didn't return any response.", callFailureHandler: fail)
                 return
             }
 
             if httpResponse!.statusCode != 200 {
                 // erver response code != 200
-                self.logError(.UnexpectedResponseCode, withMessage: "Unexpected response code: \(httpResponse!.statusCode).", callFailureHandler: fail)
+                Ajax.logError(.UnexpectedResponseCode, withMessage: "Unexpected response code: \(httpResponse!.statusCode).", callFailureHandler: fail)
                 return
             }
 
@@ -123,11 +125,13 @@ class Ajax: NSObject {
             return dataTask
         }
         else {
-            logError(.CantMakeNSURLFromString, withMessage: "Can't make NSURL from string [\(urlString)]", callFailureHandler: fail)
+            Ajax.logError(.CantMakeNSURLFromString, withMessage: "Can't make NSURL from string [\(urlString)]", callFailureHandler: fail)
         }
 
         return nil
     }
+
+    // #MARK: JSON
 
     /**
         Transforms json passed in nsdata format into [AnyObject] array.
@@ -142,6 +146,9 @@ class Ajax: NSObject {
             }
             else if let error = error {
                 // report error
+            }
+            else {
+                // this case must never happen
             }
 
         :param: data: NSData JSON in NSData format.
@@ -165,7 +172,7 @@ class Ajax: NSObject {
         }
         else {
             // Error: JSON could be parsed, but it can't be casted to [AnyObject] format
-            errorPointer.memory = NSError(domain: errorDomain, code: ErrorCode.CantCastJSONToArray.rawValue, userInfo: nil)
+            errorPointer.memory = NSError(domain: Ajax.errorDomain, code: ErrorCode.CantCastJSONToArray.rawValue, userInfo: nil)
             appLogError(errorPointer.memory!, withMessage: "JSON could be parsed, but can't be casted to [AnyObject]?")
         }
 
@@ -185,6 +192,9 @@ class Ajax: NSObject {
             }
             else if let error = error {
                 // report error
+            }
+            else {
+                // this case must never happen
             }
 
 
@@ -209,7 +219,7 @@ class Ajax: NSObject {
         }
         else {
             // Error: JSON could be parsed, but it can be casted to [String: AnyObject] format
-            errorPointer.memory = NSError(domain: errorDomain, code: ErrorCode.CantCastJSONToDictionary.rawValue, userInfo: nil)
+            errorPointer.memory = NSError(domain: Ajax.errorDomain, code: ErrorCode.CantCastJSONToDictionary.rawValue, userInfo: nil)
             appLogError(errorPointer.memory!, withMessage: "JSON could be parsed, but can't be casted to [String: AnyObject]?")
         }
 
@@ -217,10 +227,13 @@ class Ajax: NSObject {
         return nil
     }
 
+    // #MARK: file download
+
     /**
         Will download file from remote and save it locally.
-        It will call progress handler periodically while downloading.
-        It will call completion handler once when download complete.
+        Will call progress handler periodically while downloading.
+        Will call completion handler once when download complete.
+        Will call failure handler in case of an error.
 
         **Warning:** Static method, works asyncronously.
 
@@ -271,28 +284,31 @@ class Ajax: NSObject {
     // MARK: helpers
 
     /**
-        Will create error:NSError and call generic function logError()
+        Will create error:NSError and call generic function appLogError()
 
         **Warning:** Static method.
 
         Usage:
 
-            logError(.NoResponseFromServer, withMessage: "Server didn't return any response.", callFailureHandler: fail)
+            Ajax.logError(.NoResponseFromServer, withMessage: "Server didn't return any response.", callFailureHandler: nil)
 
         :param: code: ErrorCode Error code.
-        :param: message: String Error description.
-        :param: failureHandler: ( NSError->Void )? Failutre handler.
+        :param: withMessage: String Error description.
+        :param: callFailureHandler: ( NSError->Void )? Failutre handler.
     */
     private static func logError(code: ErrorCode,
                                 withMessage message: String,
                                 callFailureHandler fail: NSError->Void ) {
 
-        let error = NSError(domain: errorDomain, code: code.rawValue, userInfo: nil)
+        let error = NSError(domain: Ajax.errorDomain, code: code.rawValue, userInfo: nil)
         appLogError(error, withMessage: message, callFailureHandler: fail)
     }
 }
 
 extension Ajax: NSURLSessionDownloadDelegate {
+    /**
+        Will call when download task has finished downloading file.
+    */
     func URLSession(session: NSURLSession, downloadTask: NSURLSessionDownloadTask, didFinishDownloadingToURL location: NSURL) {
         assert(localURL != nil)
         assert(self.downloadTask != nil)
@@ -316,6 +332,9 @@ extension Ajax: NSURLSessionDownloadDelegate {
         }
     }
 
+    /**
+        Will call periodically while downloading file.
+    */
     func URLSession(session: NSURLSession, downloadTask: NSURLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
         assert(progressHandler != nil)
         assert(self.downloadTask != nil)
@@ -327,6 +346,9 @@ extension Ajax: NSURLSessionDownloadDelegate {
         }
     }
 
+    /**
+        Will call once in case of erro happened while downloading.
+    */
     func URLSession(session: NSURLSession, task: NSURLSessionTask, didCompleteWithError error: NSError?) {
         if let error = error {
             appLogError(error, withMessage: "NSURLSessionDownloadTask error for URL [\(task.originalRequest.URL)].", callFailureHandler: failureHandler)

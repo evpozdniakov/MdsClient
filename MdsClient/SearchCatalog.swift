@@ -48,7 +48,7 @@ class SearchCatalog: UIViewController {
         player = RemoteMp3Player()
         player!.delegate = self
 
-        loadRecords()
+        loadMdsRecords()
     }
 
     // #MARK: - redraw
@@ -156,12 +156,12 @@ class SearchCatalog: UIViewController {
 
     // #MARK: miscellaneous
 
-    func loadRecords() {
+    func loadMdsRecords() {
         // ask dataModel to load records
         DataModel.loadRecords() { errorMsg in
             appDisplayError(errorMsg, inViewController: self) {
                 // #TODO: replace alert by confirmation dialog
-                self.loadRecords()
+                // self.loadMdsRecords()
             }
         }
     }

@@ -201,21 +201,31 @@ class Record: NSObject, NSCoding {
     /**
         Given by JSON [AnyObject], function goes through entries, creates and returns tracks array.
         If there was no errors during parsing, will return the array even if it has no tracks.
-        Otherwise return nil.
+        Otherwise return nil and assign last error happened to passed error pointer.
 
         **Warning:** Might return empty array.
 
         Usage:
 
-            getTacksFromJson(json)
+            var error: NSError?
+            if let tracks = Record.getTacksFromJson(json, error: &error) {
+                // success
+            }
+            else if let error = error {
+                // fail
+            }
+            else {
+                // must never happen
+            }
 
         :param: json: [AnyObject] JSON with record tracks.
+        :param: error: NSErrorPointer Pointer to an error in case.
 
         :returns: [Track]?
     */
-    private func getTacksFromJson(json: [AnyObject]) -> [Track]? {
+    private func getTacksFromJson(json: [AnyObject], error errorPointer: NSErrorPointer) -> [Track]? {
         var tracks = [Track]()
-        var isErrorCase = false
+        var error: NSError?
 
         for entry in json {
             if let entry = entry as? [String: AnyObject] {
@@ -239,23 +249,32 @@ class Record: NSObject, NSCoding {
                         tracks.append(track)
                     }
                     else {
-                        Record.logError(.CantCreateUrlFromString, withMessage: "Cant create track URL from string [\(urlString)]", callFailureHandler: nil)
-                        isErrorCase = true
+                        error = NSError(domain: Record.errorDomain, code: ErrorCode.CantCreateUrlFromString.rawValue, userInfo: nil)
+                        appLogError(error, withMessage: "Cant create track URL from string [\(urlString)]")
                     }
                 }
                 else {
-                    Record.logError(.UnableToMakeTrackFromJson, withMessage: "Unable to make Track from json [\(entry)]", callFailureHandler: nil)
-                    isErrorCase = true
+                    error = NSError(domain: Record.errorDomain, code: ErrorCode.UnableToMakeTrackFromJson.rawValue, userInfo: nil)
+                    appLogError(error, withMessage: "Unable to make Track from json [\(entry)]")
                 }
             }
             else {
-                Record.logError(.UnableToParseJsonEntryAsDictionary, withMessage: "Unable to parse JSON entry as dictionary [\(entry)]", callFailureHandler: nil)
-                isErrorCase = true
+                error = NSError(domain: Record.errorDomain, code: ErrorCode.UnableToParseJsonEntryAsDictionary.rawValue, userInfo: nil)
+                appLogError(error, withMessage: "Unable to parse JSON entry as dictionary [\(entry)]")
             }
         }
 
-        if isErrorCase {
-            return nil
+        if tracks.count == 0 {
+            if let error = error {
+                if errorPointer != nil {
+                    errorPointer.memory = error
+                    return nil
+                }
+                else {
+                    // must never happen
+                    assert(false)
+                }
+            }
         }
 
         return tracks
@@ -296,7 +315,7 @@ class Record: NSObject, NSCoding {
                     var error: NSError?
 
                     if let json = Ajax.parseJsonArray(data, error: &error),
-                        tracks = self.getTacksFromJson(json) {
+                        tracks = Record.getTacksFromJson(json, error: &error) {
 
                         completionHandler(tracks, nil)
                     }

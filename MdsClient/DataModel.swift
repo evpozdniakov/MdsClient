@@ -2,16 +2,13 @@ import Foundation
 
 class DataModel: NSObject {
 
-    enum ErrorMessage: String {
-        case UnableParseCatalogJson = "Произошла ошибка при загрузке каталога."
-        case UnableGetCatalogJsonFromServer = "Сервер недоступен."
-    }
-
     enum ErrorCode: Int {
         case CantConvertUnarchivedData = 1
         case CantReadFileContents = 2
         case NSSearchPathFailed = 3
         case PlistWasntSaved = 4
+        case UnableToParseJsonEntryAsDictionary = 5
+        case UnableToMakeRefordFromJson = 6
     }
 
     static let errorDomain = "DataModelClass"
@@ -35,7 +32,7 @@ class DataModel: NSObject {
 
         Usage:
 
-            filterRecordsWhichContainText(query)
+            DataModel.filterRecordsWhichContainText(query)
 
         :param: searchString: String
     */
@@ -61,13 +58,17 @@ class DataModel: NSObject {
 
         Usage:
 
-            downloadAllRecordsJson() { errorMessage in
-                // report error
-            }
+            DataModel.downloadAllRecordsJson(
+                success: {
+                    // success code
+                },
+                fail: { error in
+                    // fail code
+                })
 
         :param: reportError: String->Void
     */
-    static func downloadAllRecordsJson(reportError: String->Void) {
+    private static func downloadAllRecordsJson(success successHandler: Void->Void, fail failureHandler: NSError->Void) {
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
             let urlString = "http://core.mds-club.ru/api/v1.0/mds/records/?access-token=" + Access.generateToken()
 
@@ -75,35 +76,56 @@ class DataModel: NSObject {
                 success: { data in
                     var error: NSError?
 
-                    if let json = Ajax.parseJsonArray(data, error: &error) {
-                        self.fillRecordsWithJson(json)
+                    if let json = Ajax.parseJsonArray(data, error: &error),
+                        records = DataModel.getRecordsFromJson(json, error: &error) {
+
+                        DataModel.allRecords = records
+                        DataModel.storeRecords()
                         // #TODO: send global notification to enable UI
-                        return
+                        successHandler()
                     }
-
-                    assert(error != nil)
-
-                    if let error = error {
-                        reportError(ErrorMessage.UnableParseCatalogJson.rawValue)
+                    else if let error = error {
+                        failureHandler(error)
+                    }
+                    else {
+                        // must never happen
+                        assert(false)
                     }
                 },
                 fail: { error in
-                    reportError(ErrorMessage.UnableParseCatalogJson.rawValue)
+                    failureHandler(error)
                 })
         }
     }
 
     /**
-        Will parse json data, fill allRecords, then call storeRecords().
+        Given by JSON [AnyObject], function goes through entries, creates and returns records array.
+        If there was no errors during parsing, will return the array even if it has no tracks.
+        Otherwise return nil and assign last error happened to passed error pointer.
+
+        **Warning:** Might return empty array.
 
         Usage:
 
-            fillRecordsWithJson(json)
+            var error: NSError?
+            if let records = DataModel.getRecordsFromJson(json, error: &error) {
+                // success
+            }
+            else if let error = error {
+                // fail
+            }
+            else {
+                // must never happen
+            }
 
-        :param: json: [AnyObject]
+        :param: json: [AnyObject] JSON with records.
+        :param: error: NSErrorPointer Pointer to an error in case.
+
+        :returns: [Record]?
     */
-    static func fillRecordsWithJson(json: [AnyObject]) {
-        allRecords = [Record]()
+    private static func getRecordsFromJson(json: [AnyObject], error errorPointer: NSErrorPointer) -> [Record]? {
+        var records = [Record]()
+        var error: NSError?
 
         for entry in json {
             if let entry = entry as? [String: AnyObject] {
@@ -123,12 +145,33 @@ class DataModel: NSObject {
                     let readDate = entry["readedAt"] as? String,
                     let station = entry["radioStation"] as? String {
                     let record = Record(id: id, author: author, title: title, readDate: readDate, station: station)
-                    allRecords.append(record)
+                    records.append(record)
+                }
+                else {
+                    error = NSError(domain: Record.errorDomain, code: ErrorCode.UnableToMakeRefordFromJson.rawValue, userInfo: nil)
+                    appLogError(error, withMessage: "Unable to make Record from json [\(entry)]")
+                }
+            }
+            else {
+                error = NSError(domain: Record.errorDomain, code: ErrorCode.UnableToParseJsonEntryAsDictionary.rawValue, userInfo: nil)
+                appLogError(error, withMessage: "Unable to parse JSON entry as dictionary [\(entry)]")
+            }
+        }
+
+        if records.count == 0 {
+            if let error = error {
+                if errorPointer != nil {
+                    errorPointer.memory = error
+                    return nil
+                }
+                else {
+                    // must never happen
+                    assert(false)
                 }
             }
         }
 
-        storeRecords()
+        return records
     }
 
     // #MARK: - work with DataModel.plist
@@ -138,19 +181,19 @@ class DataModel: NSObject {
 
         Usage:
 
-            storeRecords()
+            DataModel.storeRecords()
     */
     static func storeRecords() {
         assert(allRecords.count > 0)
 
-        if let filePath = getDataFilePath() {
+        if let filePath = DataModel.getDataFilePath() {
             let data = NSMutableData()
             let archiver = NSKeyedArchiver(forWritingWithMutableData: data)
             archiver.encodeObject(allRecords, forKey: "AllRecords")
             archiver.finishEncoding()
             let dataWrittenSuccessfully = data.writeToFile(filePath, atomically: true)
             if !dataWrittenSuccessfully {
-                throwError(.PlistWasntSaved, withMessage: "DataModel.plist was not saved. Probably there is no enough space.", callFailureHandler: nil)
+                DataModel.logError(.PlistWasntSaved, withMessage: "DataModel.plist was not saved. Probably there is no enough space.", callFailureHandler: nil)
             }
         }
     }
@@ -162,14 +205,14 @@ class DataModel: NSObject {
 
         Usage:
 
-            loadRecords() { errorMessage in
+            DataModel.loadRecords() { errorMessage in
                 // report error
             }
 
         :param: reportError: String->Void
     */
     static func loadRecords(reportError: String->Void) {
-        if let filePath = getDataFilePath() {
+        if let filePath = DataModel.getDataFilePath() {
             if NSFileManager.defaultManager().fileExistsAtPath(filePath) {
                 if let data = NSData(contentsOfFile: filePath) {
                     let unarchiver = NSKeyedUnarchiver(forReadingWithData: data)
@@ -178,14 +221,14 @@ class DataModel: NSObject {
                         self.allRecords = allRecords
                     }
                     else {
-                        throwError(.CantConvertUnarchivedData, withMessage: "Cant convert unarchived data to [Record].", callFailureHandler: nil)
+                        DataModel.logError(.CantConvertUnarchivedData, withMessage: "Cant convert unarchived data to [Record].", callFailureHandler: nil)
                     }
 
                     unarchiver.finishDecoding()
                 }
                 else {
                     // cant read file contents
-                    throwError(.CantReadFileContents, withMessage: "Cant read file contents.", callFailureHandler: nil)
+                    DataModel.logError(.CantReadFileContents, withMessage: "Cant read file contents.", callFailureHandler: nil)
                 }
             }
         }
@@ -194,7 +237,7 @@ class DataModel: NSObject {
             // #TODO: send global notification to enable UI
         }
         else {
-            downloadAllRecordsJson(reportError)
+            DataModel.downloadAllRecordsJson(reportError)
         }
     }
 
@@ -205,7 +248,7 @@ class DataModel: NSObject {
 
         Usage:
 
-            playlistContainsRecord(record)
+            DataModel.playlistContainsRecord(record)
 
         :param: Record
 
@@ -225,7 +268,7 @@ class DataModel: NSObject {
 
         Usage:
 
-            playlistRemoveRecord(record)
+            DataModel.playlistRemoveRecord(record)
 
         :param: Record
     */
@@ -245,7 +288,7 @@ class DataModel: NSObject {
 
         Usage:
 
-            playlistAddRecord(record)
+            DataModel.playlistAddRecord(record)
 
         :param: Record
     */
@@ -261,12 +304,12 @@ class DataModel: NSObject {
 
         Usage:
 
-            getDataFilePath()
+            DataModel.getDataFilePath()
 
         :returns: String?
     */
-    static func getDataFilePath() -> String? {
-        if let documentsDir = documementsDirectory() {
+    private static func getDataFilePath() -> String? {
+        if let documentsDir = DataModel.documementsDirectory() {
             let filePath = documentsDir.stringByAppendingPathComponent("DataModel.plist")
             // println("filePath:\(filePath)")
             return filePath
@@ -280,16 +323,16 @@ class DataModel: NSObject {
 
         Usage:
 
-            documementsDirectory()
+            DataModel.documementsDirectory()
 
         :returns: String?
     */
-    static func documementsDirectory() -> String? {
+    private static func documementsDirectory() -> String? {
         if let paths = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true) as? [String] {
             return paths[0]
         }
         else {
-            throwError(.NSSearchPathFailed, withMessage: "NSSearchPathForDirectoriesInDomains failed.", callFailureHandler: nil)
+            DataModel.logError(.NSSearchPathFailed, withMessage: "NSSearchPathForDirectoriesInDomains failed.", callFailureHandler: nil)
         }
 
         return nil
@@ -302,44 +345,17 @@ class DataModel: NSObject {
 
         Usage:
 
-            throwError(.NoResponseFromServer, withMessage: "Server didn't return any response.", callFailureHandler: fail)
+            DataModel.logError(.NoResponseFromServer, withMessage: "Server didn't return any response.", callFailureHandler: fail)
 
         :param: code: ErrorCode Error code.
         :param: message: String Error description.
         :param: failureHandler: ( NSError->Void )? Failutre handler.
     */
-    static func throwError(code: ErrorCode,
-                            withMessage message: String,
-                            callFailureHandler failureHandler: ( NSError->Void )? ) {
+    private static func logError(code: ErrorCode,
+                                withMessage message: String,
+                                callFailureHandler fail: (NSError->Void)? ) {
 
         let error = NSError(domain: errorDomain, code: code.rawValue, userInfo: nil)
-
-        throwError(error, withMessage: message, callFailureHandler: failureHandler)
-    }
-
-    /**
-        Will create error:NSError and call generic function logError()
-
-        **Warning:** Static method.
-
-        Usage:
-
-            throwError(error, withMessage: "Server didn't return any response.") { error in
-                // failure code
-            }
-
-        :param: error: NSError The error.
-        :param: message: String Error description.
-        :param: failureHandler: ( NSError->Void )? Failure handler.
-    */
-    static func throwError(error: NSError,
-                            withMessage message: String,
-                            callFailureHandler failureHandler: ( NSError->Void )? ) {
-
-        appLogError(error, withMessage: message)
-
-        if let failureHandler = failureHandler {
-            failureHandler(error)
-        }
+        appLogError(error, withMessage: message, callFailureHandler: fail)
     }
 }
