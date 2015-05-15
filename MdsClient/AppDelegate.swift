@@ -50,17 +50,20 @@ internal func appDisplayError(message: String,
 
     Usage:
 
-        appLogError(err, withMessage: msg, callFailureHandler: fail)
+        appLogError(err, withMessage: msg, callFailureHandler: failureHandler)
 
     :param: error: NSError The error.
     :param: withMessage: String Error custom message.
     :param: callFailureHandler: ( NSError->Void )? Failure handler.
 */
-internal func appLogError(error: NSError, withMessage message: String, callFailureHandler fail: ( NSError->Void )?) {
+internal func appLogError(error: NSError,
+                        withMessage message: String,
+                        callFailureHandler failureHandler: ( NSError->Void )?) {
+
     appLogError(error, withMessage: message)
 
-    if let fail = fail {
-        fail(error)
+    if let failureHandler = failureHandler {
+        failureHandler(error)
     }
 }
 
@@ -89,6 +92,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
         // Override point for customization after application launch.
 
+        // Restore DataModel state and data from DataModel.plist
+        DataModel.restore()
+
         return true
     }
 
@@ -100,7 +106,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func applicationDidEnterBackground(application: UIApplication) {
         // Use this method to release shared resources, save user data, invalidate timers, and store enough application state information to restore your application to its current state in case it is terminated later.
         // If your application supports background execution, this method is called instead of applicationWillTerminate: when the user quits.
-        DataModel.storeRecords()
+        DataModel.store()
     }
 
     func applicationWillEnterForeground(application: UIApplication) {
@@ -113,7 +119,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func applicationWillTerminate(application: UIApplication) {
         // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
-        DataModel.storeRecords()
+        DataModel.store()
     }
 }
 

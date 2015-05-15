@@ -50,8 +50,8 @@ class Ajax: NSObject {
         :returns: NSURLSessionDataTask
     */
     internal static func get(#url: NSURL,
-                            success: NSData->Void,
-                            fail: NSError->Void)
+                            success successHandler: NSData->Void,
+                            fail failureHandler: NSError->Void)
                             -> NSURLSessionDataTask {
         // println("call Ajax.get() with url: \(url)")
         let session = NSURLSession.sharedSession()
@@ -65,7 +65,7 @@ class Ajax: NSObject {
 
                 // The operation couldn’t be completed. (kCFErrorDomainCFNetwork error -1003.)
                 // It happens when URL is unreachable
-                appLogError(error, withMessage: "Probably the URL [\(url)] is unreachable.", callFailureHandler: fail)
+                appLogError(error, withMessage: "Probably the URL [\(url)] is unreachable.", callFailureHandler: failureHandler)
                 return
             }
 
@@ -73,17 +73,15 @@ class Ajax: NSObject {
 
             if httpResponse == nil || httpResponse!.statusCode == 500 {
                 // Server didn't return any response
-                Ajax.logError(.NoResponseFromServer, withMessage: "Server didn't return any response.", callFailureHandler: fail)
-                return
+                Ajax.logError(.NoResponseFromServer, withMessage: "Server didn't return any response.", callFailureHandler: failureHandler)
             }
-
-            if httpResponse!.statusCode != 200 {
+            else if httpResponse!.statusCode != 200 {
                 // erver response code != 200
-                Ajax.logError(.UnexpectedResponseCode, withMessage: "Unexpected response code: \(httpResponse!.statusCode).", callFailureHandler: fail)
-                return
+                Ajax.logError(.UnexpectedResponseCode, withMessage: "Unexpected response code: \(httpResponse!.statusCode).", callFailureHandler: failureHandler)
             }
-
-            success(data)
+            else {
+                successHandler(data)
+            }
         }
 
         dataTask.resume()
@@ -113,19 +111,19 @@ class Ajax: NSObject {
         :returns: NSURLSessionDataTask?
     */
     internal static func getJsonByUrlString(urlString: String,
-                                            success: NSData->Void,
-                                            fail: NSError->Void)
+                                            success successHandler: NSData->Void,
+                                            fail failureHandler: NSError->Void)
                                             -> NSURLSessionDataTask? {
         // println("call getJsonByUrlString with urlString: \(urlString)")
         if let url = NSURL(string:urlString) {
             // println("url is correct")
 
-            let dataTask = Ajax.get(url: url, success: success, fail: fail)
+            let dataTask = Ajax.get(url: url, success: successHandler, fail: failureHandler)
 
             return dataTask
         }
         else {
-            Ajax.logError(.CantMakeNSURLFromString, withMessage: "Can't make NSURL from string [\(urlString)]", callFailureHandler: fail)
+            Ajax.logError(.CantMakeNSURLFromString, withMessage: "Can't make NSURL from string [\(urlString)]", callFailureHandler: failureHandler)
         }
 
         return nil
@@ -165,15 +163,25 @@ class Ajax: NSObject {
             return json
         }
 
-        if let error = error {
+        if error != nil {
             // Cocoa error 3840: JSON text did not start with array or object and option to allow fragments not set
-            errorPointer.memory = error
-            appLogError(error, withMessage: "JSON text did not start with array or object")
+            appLogError(error!, withMessage: "JSON text did not start with array or object")
+
         }
         else {
             // Error: JSON could be parsed, but it can't be casted to [AnyObject] format
-            errorPointer.memory = NSError(domain: Ajax.errorDomain, code: ErrorCode.CantCastJSONToArray.rawValue, userInfo: nil)
-            appLogError(errorPointer.memory!, withMessage: "JSON could be parsed, but can't be casted to [AnyObject]?")
+            error = NSError(domain: Ajax.errorDomain, code: ErrorCode.CantCastJSONToArray.rawValue, userInfo: nil)
+            appLogError(error!, withMessage: "JSON could be parsed, but can't be casted to [AnyObject]?")
+        }
+
+        if let error = error {
+            if errorPointer != nil {
+                errorPointer.memory = error
+            }
+            else {
+                // must never happen
+                assert(false)
+            }
         }
 
         return nil
@@ -212,17 +220,25 @@ class Ajax: NSObject {
             return json
         }
 
-        if let error = error {
+        if error != nil {
             // Cocoa error 3840: JSON text did not start with array or object and option to allow fragments not set
-            errorPointer.memory = error
-            appLogError(error, withMessage: "JSON text did not start with array or object")
+            appLogError(error!, withMessage: "JSON text did not start with array or object")
         }
         else {
             // Error: JSON could be parsed, but it can be casted to [String: AnyObject] format
-            errorPointer.memory = NSError(domain: Ajax.errorDomain, code: ErrorCode.CantCastJSONToDictionary.rawValue, userInfo: nil)
-            appLogError(errorPointer.memory!, withMessage: "JSON could be parsed, but can't be casted to [String: AnyObject]?")
+            error = NSError(domain: Ajax.errorDomain, code: ErrorCode.CantCastJSONToDictionary.rawValue, userInfo: nil)
+            appLogError(error!, withMessage: "JSON could be parsed, but can't be casted to [String: AnyObject]?")
         }
 
+        if let error = error {
+            if errorPointer != nil {
+                errorPointer.memory = error
+            }
+            else {
+                // must never happen
+                assert(false)
+            }
+        }
 
         return nil
     }
@@ -298,10 +314,10 @@ class Ajax: NSObject {
     */
     private static func logError(code: ErrorCode,
                                 withMessage message: String,
-                                callFailureHandler fail: NSError->Void ) {
+                                callFailureHandler failureHandler: NSError->Void ) {
 
         let error = NSError(domain: Ajax.errorDomain, code: code.rawValue, userInfo: nil)
-        appLogError(error, withMessage: message, callFailureHandler: fail)
+        appLogError(error, withMessage: message, callFailureHandler: failureHandler)
     }
 }
 
@@ -325,6 +341,8 @@ extension Ajax: NSURLSessionDownloadDelegate {
             if let error = error {
                 appLogError(error, withMessage: "Can't move file to [\(localURL)].", callFailureHandler: failureHandler)
             }
+
+            // fixme: shouldn't we avoid call completionHandler in case of error?
 
             if let completionHandler = completionHandler {
                 completionHandler()

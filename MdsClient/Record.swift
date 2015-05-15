@@ -30,6 +30,8 @@ class Record: NSObject, NSCoding {
         case LocalUrlIsNil = 6
         case DocumentDirsIsEmpty = 7
         case TrackUrlHasNoExtension = 8
+        case NoTracksFoundInJson = 9
+        case PlayableTrackNotFound = 10
     }
 
     var id: Int
@@ -127,45 +129,52 @@ class Record: NSObject, NSCoding {
     /**
         The goal is to return first playable record track. (Playable means one with http or https protocol.)
         If record doesn't have tracks information yet, will download then parse tracks json.
+        Method either calls success with track, or fail with error.
 
         **Warning:** Might work asynchronously.
 
         Usage:
 
-            getFirstPlayableTrack() { track, error in
-                if let error = error {
-                    // fail code
-                }
-                else {
-                    // success code
-                }
+            getFirstPlayableTrack(
+                success: { track in
+                    //
+                },
+                fail: { error in
+                    //
+                })
             }
 
-        :param: completionHandler: (Track?, NSError?)->Void Completion handler.
+        :param: success: Track->Void Completion handler.
+        :param: fail: NSError->Void Failure handler.
     */
-    internal func getFirstPlayableTrack(completionHandler: (Track?, NSError?)->Void) {
+    internal func getFirstPlayableTrack(success successHandler: Track->Void,
+                                        fail failureHandler: NSError->Void) {
+
         // println("call Playlist.getFirstPlayableTrack() ")
         if let tracks = tracks {
             // tracks has been downloaded earlier
-            completionHandler(getAnyTrackWithHttpProtocol(tracks), nil)
+            var error: NSError?
+
+            if let track = getAnyTrackWithHttpProtocol(tracks, &error) {
+                successHandler(track)
+            }
+            else if let error = error {
+                failureHandler(error)
+            }
+            else {
+                // must never happen
+                assert(false)
+            }
         }
         else {
             // will download record tracks first
-            downloadAndParseTracksJson() { tracks, error in
-                let e = NSError(domain: Record.errorDomain, code: 928371837, userInfo: nil)
-                completionHandler(nil, e)
-                return
-
-                if let error = error {
-                    completionHandler(nil, error)
-                }
-                else if let tracks = tracks {
+            downloadAndParseTracksJson(
+                success: { tracks in
                     self.tracks = tracks
-                    self.getFirstPlayableTrack(completionHandler)
-                }
-                else {
-                    // must never happen
-                    assert(false)
+                    self.getFirstPlayableTrack(success: successHandler, fail: failureHandler)
+                },
+                fail: { error in
+                    failureHandler(error)
                 }
             }
         }
@@ -183,16 +192,30 @@ class Record: NSObject, NSCoding {
             let track = getAnyTrackWithHttpProtocol(tracks)
 
         :param: tracks [Track] Array of tracks to go through.
+        :param: error NSErrorPointer
 
         :returns: Track?
     */
-    private func getAnyTrackWithHttpProtocol(tracks: [Track]) -> Track? {
+    private func getAnyTrackWithHttpProtocol(tracks: [Track], 
+                                            error errorPointer: NSErrorPointer) -> Track? {
+
         for track in tracks {
             let scheme = track.url.scheme
 
             if scheme == "http" || scheme == "https" {
                 return track
             }
+        }
+
+        let error = NSError(domain: Record.errorDomain, code: ErrorCode.PlayableTrackNotFound.rawValue, userInfo: nil)
+        appLogError(error, withMessage: "Playable track not found in tracks: [\(tracks)].")
+
+        if errorPointer != nil {
+            errorPointer.memory = error
+        }
+        else {
+            // must never happen
+            assert(false)
         }
 
         return nil
@@ -208,7 +231,7 @@ class Record: NSObject, NSCoding {
         Usage:
 
             var error: NSError?
-            if let tracks = Record.getTacksFromJson(json, error: &error) {
+            if let tracks = Record.getTracksFromJson(json, error: &error) {
                 // success
             }
             else if let error = error {
@@ -223,7 +246,7 @@ class Record: NSObject, NSCoding {
 
         :returns: [Track]?
     */
-    private func getTacksFromJson(json: [AnyObject], error errorPointer: NSErrorPointer) -> [Track]? {
+    private static func getTracksFromJson(json: [AnyObject], error errorPointer: NSErrorPointer) -> [Track]? {
         var tracks = [Track]()
         var error: NSError?
 
@@ -250,17 +273,17 @@ class Record: NSObject, NSCoding {
                     }
                     else {
                         error = NSError(domain: Record.errorDomain, code: ErrorCode.CantCreateUrlFromString.rawValue, userInfo: nil)
-                        appLogError(error, withMessage: "Cant create track URL from string [\(urlString)]")
+                        appLogError(error!, withMessage: "Cant create track URL from string [\(urlString)]")
                     }
                 }
                 else {
                     error = NSError(domain: Record.errorDomain, code: ErrorCode.UnableToMakeTrackFromJson.rawValue, userInfo: nil)
-                    appLogError(error, withMessage: "Unable to make Track from json [\(entry)]")
+                    appLogError(error!, withMessage: "Unable to make Track from json [\(entry)]")
                 }
             }
             else {
                 error = NSError(domain: Record.errorDomain, code: ErrorCode.UnableToParseJsonEntryAsDictionary.rawValue, userInfo: nil)
-                appLogError(error, withMessage: "Unable to parse JSON entry as dictionary [\(entry)]")
+                appLogError(error!, withMessage: "Unable to parse JSON entry as dictionary [\(entry)]")
             }
         }
 
@@ -282,28 +305,31 @@ class Record: NSObject, NSCoding {
 
     /**
         Will call mds-club API for record tracks json.
-        If server response succeeded, will parse the json and pass it to getTacksFromJson().
-        If tracks parsed without error, will call completion handler with tracks array.
-        The array might be empty.
+        If server response succeeded, will parse the json and pass it to getTracksFromJson().
+        If tracks parsed without error, calls success handler, even if array is empty.
+        Otherwise calls failure handler.
 
         If server didn't response or json parse failed, will call completion handler with error.
 
-        **Warning:** Works in separate thread. Works asynchronously. Resulting tracks array might be empty.
+        **Warning:** Works in separate thread. Works asynchronously. Might return empty array.
 
         Usage:
 
-            downloadAndParseTracksJson() { tracks, error in
-                if let error = error {
-                    // failure
-                }
-                else {
+            downloadAndParseTracksJson(
+                success: { tracks in
                     // success
-                }
+                },
+                fail: { error in
+                    // failure
+                })
             }
 
-        :param: completionHandler: ([Track]?, NSError?)->Void
+        :param: success: [Track]->Void Completion handler.
+        :param: fail: NSError->Void Failure handler.
     */
-    private func downloadAndParseTracksJson(completionHandler: ([Track]?, NSError?)->Void) {
+    private func downloadAndParseTracksJson(success successHandler: [Track]->Void,
+                                            fail failureHandler: NSError->Void) {
+
         // println("call downloadAndParseTracksJson")
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
             // println("dispatch async")
@@ -315,12 +341,16 @@ class Record: NSObject, NSCoding {
                     var error: NSError?
 
                     if let json = Ajax.parseJsonArray(data, error: &error),
-                        tracks = Record.getTacksFromJson(json, error: &error) {
+                        tracks = Record.getTracksFromJson(json, error: &error) {
 
-                        completionHandler(tracks, nil)
+                        if tracks.count == 0 {
+                            Record.logError(.NoTracksFoundInJson, withMessage: "No tracks found in JSON: [\(json)].", callFailureHandler: nil)
+                        }
+
+                        successHandler(tracks)
                     }
                     else if let error = error {
-                        completionHandler(nil, error)
+                        failureHandler(error)
                     }
                     else {
                         // must never happen
@@ -328,7 +358,7 @@ class Record: NSObject, NSCoding {
                     }
                 },
                 fail: { error in
-                    completionHandler(nil, error)
+                    failureHandler(error)
                 })
         }
     }
@@ -393,10 +423,10 @@ class Record: NSObject, NSCoding {
     */
     private static func logError(code: ErrorCode,
                                 withMessage message: String,
-                                callFailureHandler fail: (NSError->Void)? ) {
+                                callFailureHandler failureHandler: (NSError->Void)? ) {
 
         let error = NSError(domain: errorDomain, code: code.rawValue, userInfo: nil)
-        appLogError(error, withMessage: message, callFailureHandler: fail)
+        appLogError(error, withMessage: message, callFailureHandler: failureHandler)
     }
 }
 

@@ -48,7 +48,7 @@ class SearchCatalog: UIViewController {
         player = RemoteMp3Player()
         player!.delegate = self
 
-        loadMdsRecords()
+        loadMdsRecordsOnce()
     }
 
     // #MARK: - redraw
@@ -156,13 +156,20 @@ class SearchCatalog: UIViewController {
 
     // #MARK: miscellaneous
 
-    func loadMdsRecords() {
-        // ask dataModel to load records
-        DataModel.loadRecords() { errorMsg in
-            appDisplayError(errorMsg, inViewController: self) {
-                // #TODO: replace alert by confirmation dialog
-                // self.loadMdsRecords()
-            }
+    // #TODO: think about moving this method to AppDelegate. We might need it when application state is restored.
+    /* Можно сделать два метода у DataModel. Один будет восстанавливать состояние из файла DataModel.plist, другой будет загружать записи из сети. Первый можно запускать из AppDelegate синхронно. Второй можно запускать только из SearchCatalog (если файла DataModel.plist еще нет, то пользователь окажется в SearchCatalog, он не сможет оказаться в каком-то другом вью контроллере.) */
+    func loadMdsRecordsOnce() {
+        if DataModel.allRecords.count == 0 {
+            // #TODO: block UI
+            DataModel.downloadCatalog(
+                success: {
+                    // #TODO: (do not forget switch to main thread!) unblock UI
+                },
+                fail: {
+                    appDisplayError(errorMsg, inViewController: self) {
+                        // #TODO: (do not forget switch to main thread!) replace alert by confirmation dialog, then call self.loadMdsRecordsOnce() again?
+                    }
+                })
         }
     }
 

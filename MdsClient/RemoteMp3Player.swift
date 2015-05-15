@@ -62,7 +62,7 @@ class RemoteMp3Player: NSObject {
         case Resume
     }
 
-    let errorDomain = "RemoteMp3Player"
+    static let errorDomain = "RemoteMp3Player"
 
     enum ErrorCode: Int {
         case UnexpectedStatusOnStart = 1
@@ -112,7 +112,7 @@ class RemoteMp3Player: NSObject {
 
     func startPlayback(#url: NSURL) {
         if playbackStatus != .Unknown {
-            logError(.UnexpectedStatusOnStart, withMessage: "Unexpected status on start: [\(playbackStatus.rawValue)].", callFailureHandler: nil)
+            RemoteMp3Player.logError(.UnexpectedStatusOnStart, withMessage: "Unexpected status on start: [\(playbackStatus.rawValue)].")
             return
         }
 
@@ -148,7 +148,7 @@ class RemoteMp3Player: NSObject {
 
     func pausePlayback() {
         if playbackStatus == .Paused {
-            logError(.UnexpectedStatusOnPause, withMessage: "Unexpected status Pause on pause", callFailureHandler: nil)
+            RemoteMp3Player.logError(.UnexpectedStatusOnPause, withMessage: "Unexpected status Pause on pause")
             return
         }
 
@@ -164,17 +164,17 @@ class RemoteMp3Player: NSObject {
 
     func resumePlayback() {
         if playbackStatus != .Paused && playbackStatus != .TimeChanging {
-            logError(.UnexpectedStatusOnResume, withMessage: "Unexpected status on resume: [\(playbackStatus.rawValue)].", callFailureHandler: nil)
+            RemoteMp3Player.logError(.UnexpectedStatusOnResume, withMessage: "Unexpected status on resume: [\(playbackStatus.rawValue)].")
             return
         }
 
         if player.rate > 0 {
-            logError(.PlaybackNotPaused, withMessage: "Playback not paused.", callFailureHandler: nil)
+            RemoteMp3Player.logError(.PlaybackNotPaused, withMessage: "Playback not paused.")
             return
         }
 
         if pausedAt == nil {
-            logError(.PausedAtIsNil, withMessage: "PausedAt is nil.", callFailureHandler: nil)
+            RemoteMp3Player.logError(.PausedAtIsNil, withMessage: "PausedAt is nil.")
             return
         }
 
@@ -192,7 +192,7 @@ class RemoteMp3Player: NSObject {
 
     func setVolumeTo(value: Float) {
         if value < 0 || value > 1 {
-            logError(.UnexpectedVolume, withMessage: "Unexpected volume.", callFailureHandler: nil)
+            RemoteMp3Player.logError(.UnexpectedVolume, withMessage: "Unexpected volume.")
             return
         }
 
@@ -203,22 +203,22 @@ class RemoteMp3Player: NSObject {
         switch (playbackStatus) {
             case .Playing:
                 if reportCurrentTimeTimer == nil {
-                    logError(.TimerIsNilWhilePlaying, withMessage: "Timer is nil while playing.", callFailureHandler: nil)
+                    RemoteMp3Player.logError(.TimerIsNilWhilePlaying, withMessage: "Timer is nil while playing.")
                     return
                 }
             case .Paused:
                 if reportCurrentTimeTimer != nil {
-                    logError(.TimerNotNilWhilePaused, withMessage: "Timer is nil while paused.", callFailureHandler: nil)
+                    RemoteMp3Player.logError(.TimerNotNilWhilePaused, withMessage: "Timer is nil while paused.")
                     return
                 }
             case .TimeChanging:
                 if reportCurrentTimeTimer != nil {
-                    logError(.TimerNotNilWhileTimeChanging, withMessage: "Timer is nil while time changing.", callFailureHandler: nil)
+                    RemoteMp3Player.logError(.TimerNotNilWhileTimeChanging, withMessage: "Timer is nil while time changing.")
                     return
                 }
             case .Seeking:
                 if reportCurrentTimeTimer != nil {
-                    logError(.TimerNotNilWhileSeeking, withMessage: "Timer not nil while seeking.", callFailureHandler: nil)
+                    RemoteMp3Player.logError(.TimerNotNilWhileSeeking, withMessage: "Timer not nil while seeking.")
                     return
                 }
             default: break
@@ -231,12 +231,12 @@ class RemoteMp3Player: NSObject {
 
     func completeSeeking(position: Float) {
         if playbackStatus != .TimeChanging {
-            logError(.UnexpectedStatusOnCompleteSeeking, withMessage: "Unexpected status on completeSeeking: [\(playbackStatus.rawValue)].", callFailureHandler: nil)
+            RemoteMp3Player.logError(.UnexpectedStatusOnCompleteSeeking, withMessage: "Unexpected status on completeSeeking: [\(playbackStatus.rawValue)].")
             return
         }
 
         if trackDuration == nil {
-            logError(.TrackDurationIsNil, withMessage: "Track duration is nil.", callFailureHandler: nil)
+            RemoteMp3Player.logError(.TrackDurationIsNil, withMessage: "Track duration is nil.")
             return
         }
 
@@ -289,7 +289,7 @@ class RemoteMp3Player: NSObject {
 
     override func observeValueForKeyPath(keyPath: String, ofObject object: AnyObject, change: [NSObject : AnyObject], context: UnsafeMutablePointer<Void>) {
         if playerItem == nil {
-            logError(.PlayerItemIsNil, withMessage: "PlayerItemIsNil", callFailureHandler: nil)
+            RemoteMp3Player.logError(.PlayerItemIsNil, withMessage: "PlayerItemIsNil")
             return
         }
 
@@ -340,31 +340,26 @@ class RemoteMp3Player: NSObject {
             delegate?.remoteMp3Player?(self, raisedError: error, withMessage: "Cant register audio session because of the error: [\(error)].")
         }
         else {
-            let error = NSError(domain: errorDomain, code: ErrorCode.RegisterAudioSessionUnknownError.rawValue, userInfo: nil)
-            delegate?.remoteMp3Player?(self, raisedError: error, withMessage: "Cant register audio session because of unknown error.")
+            RemoteMp3Player.logError(.RegisterAudioSessionUnknownError, withMessage: "Cant register audio session because of unknown error.")
         }
     }
 
     // #MARK: helpers
 
     /**
-        Will create error:NSError and call generic function logError()
+        Will create error:NSError and pass it to delegate.
 
         **Warning:** Static method.
 
         Usage:
 
-            logError(.NoResponseFromServer, withMessage: "Server didn't return any response.", callFailureHandler: fail)
+            RemoteMp3Player.logError(.NoResponseFromServer, withMessage: "Server didn't return any response.", callFailureHandler: fail)
 
         :param: code: ErrorCode Error code.
         :param: message: String Error description.
-        :param: failureHandler: ( NSError->Void )? Failutre handler.
     */
-    func logError(code: ErrorCode,
-                                withMessage message: String,
-                                callFailureHandler fail: (NSError->Void)? ) {
-
-        let error = NSError(domain: errorDomain, code: code.rawValue, userInfo: nil)
+    private static func logError(code: ErrorCode, withMessage message: String) {
+        let error = NSError(domain: RemoteMp3Player.errorDomain, code: code.rawValue, userInfo: nil)
 
         delegate?.remoteMp3Player?(self, raisedError: error, withMessage: message)
     }

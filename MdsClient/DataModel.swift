@@ -36,7 +36,7 @@ class DataModel: NSObject {
 
         :param: searchString: String
     */
-    static func filterRecordsWhichContainText(searchString: String) {
+    internal static func filterRecordsWhichContainText(searchString: String) {
         let searchStringLowercase = searchString.lowercaseString
 
         filteredRecords = [Record]()
@@ -49,54 +49,6 @@ class DataModel: NSObject {
     }
 
     // #MARK: - json
-
-    /**
-        Downloads all records json data from server.
-        When done, fills dataModel.records with data.
-
-        **Warning:** Works asynchronously.
-
-        Usage:
-
-            DataModel.downloadAllRecordsJson(
-                success: {
-                    // success code
-                },
-                fail: { error in
-                    // fail code
-                })
-
-        :param: reportError: String->Void
-    */
-    private static func downloadAllRecordsJson(success successHandler: Void->Void, fail failureHandler: NSError->Void) {
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
-            let urlString = "http://core.mds-club.ru/api/v1.0/mds/records/?access-token=" + Access.generateToken()
-
-            Ajax.getJsonByUrlString(urlString,
-                success: { data in
-                    var error: NSError?
-
-                    if let json = Ajax.parseJsonArray(data, error: &error),
-                        records = DataModel.getRecordsFromJson(json, error: &error) {
-
-                        DataModel.allRecords = records
-                        DataModel.storeRecords()
-                        // #TODO: send global notification to enable UI
-                        successHandler()
-                    }
-                    else if let error = error {
-                        failureHandler(error)
-                    }
-                    else {
-                        // must never happen
-                        assert(false)
-                    }
-                },
-                fail: { error in
-                    failureHandler(error)
-                })
-        }
-    }
 
     /**
         Given by JSON [AnyObject], function goes through entries, creates and returns records array.
@@ -149,12 +101,12 @@ class DataModel: NSObject {
                 }
                 else {
                     error = NSError(domain: Record.errorDomain, code: ErrorCode.UnableToMakeRefordFromJson.rawValue, userInfo: nil)
-                    appLogError(error, withMessage: "Unable to make Record from json [\(entry)]")
+                    appLogError(error!, withMessage: "Unable to make Record from json [\(entry)]")
                 }
             }
             else {
                 error = NSError(domain: Record.errorDomain, code: ErrorCode.UnableToParseJsonEntryAsDictionary.rawValue, userInfo: nil)
-                appLogError(error, withMessage: "Unable to parse JSON entry as dictionary [\(entry)]")
+                appLogError(error!, withMessage: "Unable to parse JSON entry as dictionary [\(entry)]")
             }
         }
 
@@ -177,41 +129,88 @@ class DataModel: NSObject {
     // #MARK: - work with DataModel.plist
 
     /**
-        Will store records in local file DataModel.plist under key "AllRecords".
+        Will store DataModel state in local file DataModel.plist.
+        - records under key "AllRecords"
+        TODO: store playlist record indexes
+        - playlist under key ???
 
         Usage:
 
-            DataModel.storeRecords()
+            DataModel.store()
     */
-    static func storeRecords() {
-        assert(allRecords.count > 0)
-
-        if let filePath = DataModel.getDataFilePath() {
-            let data = NSMutableData()
-            let archiver = NSKeyedArchiver(forWritingWithMutableData: data)
-            archiver.encodeObject(allRecords, forKey: "AllRecords")
-            archiver.finishEncoding()
-            let dataWrittenSuccessfully = data.writeToFile(filePath, atomically: true)
-            if !dataWrittenSuccessfully {
-                DataModel.logError(.PlistWasntSaved, withMessage: "DataModel.plist was not saved. Probably there is no enough space.", callFailureHandler: nil)
+    internal static func store() {
+        if allRecords.count > 0 {
+            if let filePath = DataModel.getDataFilePath() {
+                let data = NSMutableData()
+                let archiver = NSKeyedArchiver(forWritingWithMutableData: data)
+                archiver.encodeObject(allRecords, forKey: "AllRecords")
+                archiver.finishEncoding()
+                let dataWrittenSuccessfully = data.writeToFile(filePath, atomically: true)
+                if !dataWrittenSuccessfully {
+                    DataModel.logError(.PlistWasntSaved, withMessage: "DataModel.plist was not saved. Probably there is no enough space.", callFailureHandler: nil)
+                }
             }
         }
     }
 
     /**
-        Will load records either from local file DataModel.plist or download/parse/apply records json.
+        Downloads catalog records from server.
+        If done without errors, fills dataModel.records with data and calls success handler.
+        Calls failure handler otherwise.
 
-        **Warning:** Need to be ran asynchronously.
+        **Warning:** Run in (call handlers from) separate thread.
 
         Usage:
 
-            DataModel.loadRecords() { errorMessage in
-                // report error
-            }
+            DataModel.downloadCatalog(
+                success: {
+                    // success code
+                },
+                fail: { error in
+                    // fail code
+                })
 
-        :param: reportError: String->Void
+        :param: success: Void->Void Success handler.
+        :param: fail: NSError->Void Failure handler.
     */
-    static func loadRecords(reportError: String->Void) {
+    private static func downloadCatalog(success successHandler: Void->Void,
+                                        fail failureHandler: NSError->Void) {
+
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
+            let urlString = "http://core.mds-club.ru/api/v1.0/mds/records/?access-token=" + Access.generateToken()
+
+            Ajax.getJsonByUrlString(urlString,
+                success: { data in
+                    var error: NSError?
+
+                    if let json = Ajax.parseJsonArray(data, error: &error),
+                        records = DataModel.getRecordsFromJson(json, error: &error) {
+                        DataModel.allRecords = records
+                        DataModel.store()
+                        successHandler()
+                    }
+                    else if let error = error {
+                        failureHandler(error)
+                    }
+                    else {
+                        // must never happen
+                        assert(false)
+                    }
+                },
+                fail: { error in
+                    failureHandler(error)
+                })
+        }
+    }
+
+    /**
+        Loads data from DataModel.plist, if exists.
+
+        Usage:
+
+            DataModel.restore()
+    */
+    internal static func restore() {
         if let filePath = DataModel.getDataFilePath() {
             if NSFileManager.defaultManager().fileExistsAtPath(filePath) {
                 if let data = NSData(contentsOfFile: filePath) {
@@ -224,6 +223,8 @@ class DataModel: NSObject {
                         DataModel.logError(.CantConvertUnarchivedData, withMessage: "Cant convert unarchived data to [Record].", callFailureHandler: nil)
                     }
 
+                    // #TODO: restore playlist as well
+
                     unarchiver.finishDecoding()
                 }
                 else {
@@ -231,13 +232,6 @@ class DataModel: NSObject {
                     DataModel.logError(.CantReadFileContents, withMessage: "Cant read file contents.", callFailureHandler: nil)
                 }
             }
-        }
-
-        if allRecords.count > 0 {
-            // #TODO: send global notification to enable UI
-        }
-        else {
-            DataModel.downloadAllRecordsJson(reportError)
         }
     }
 
@@ -254,7 +248,7 @@ class DataModel: NSObject {
 
         :returns: Bool
     */
-    static func playlistContainsRecord(record: Record) -> Bool {
+    internal static func playlistContainsRecord(record: Record) -> Bool {
         if let index = find(playlist, record) {
             return true
         }
@@ -272,7 +266,7 @@ class DataModel: NSObject {
 
         :param: Record
     */
-    static func playlistRemoveRecord(record: Record) {
+    internal static func playlistRemoveRecord(record: Record) {
         if let index = find(playlist, record) {
             playlist.removeAtIndex(index)
             record.cancelDownloading()
@@ -292,7 +286,7 @@ class DataModel: NSObject {
 
         :param: Record
     */
-    static func playlistAddRecord(record: Record) {
+    internal static func playlistAddRecord(record: Record) {
         playlist.append(record)
         record.startDownloading()
     }
@@ -353,9 +347,9 @@ class DataModel: NSObject {
     */
     private static func logError(code: ErrorCode,
                                 withMessage message: String,
-                                callFailureHandler fail: (NSError->Void)? ) {
+                                callFailureHandler failureHandler: (NSError->Void)? ) {
 
         let error = NSError(domain: errorDomain, code: code.rawValue, userInfo: nil)
-        appLogError(error, withMessage: message, callFailureHandler: fail)
+        appLogError(error, withMessage: message, callFailureHandler: failureHandler)
     }
 }
