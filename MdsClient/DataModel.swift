@@ -9,6 +9,7 @@ class DataModel: NSObject {
         case PlistWasntSaved = 4
         case UnableToParseJsonEntryAsDictionary = 5
         case UnableToMakeRefordFromJson = 6
+        case DocumentDirsIsEmpty = 7
     }
 
     static let errorDomain = "DataModelClass"
@@ -17,15 +18,6 @@ class DataModel: NSObject {
     static var filteredRecords = [Record]()
     static var playlist = [Record]()
     static var playingRecord: Record?
-
-    static var playingRecordIndex: Int? {
-        if let playingRecord = self.playingRecord {
-
-            return find(filteredRecords, playingRecord)
-        }
-
-        return nil
-    }
 
     /**
         Will filter records with search string and put them into filteredRecords array.
@@ -140,12 +132,12 @@ class DataModel: NSObject {
     */
     internal static func store() {
         if allRecords.count > 0 {
-            if let filePath = DataModel.getDataFilePath() {
+            if let fileURL = DataModel.getDataFileURL() {
                 let data = NSMutableData()
                 let archiver = NSKeyedArchiver(forWritingWithMutableData: data)
                 archiver.encodeObject(allRecords, forKey: "AllRecords")
                 archiver.finishEncoding()
-                let dataWrittenSuccessfully = data.writeToFile(filePath, atomically: true)
+                let dataWrittenSuccessfully = data.writeToURL(fileURL, atomically: true)
                 if !dataWrittenSuccessfully {
                     DataModel.logError(.PlistWasntSaved, withMessage: "DataModel.plist was not saved. Probably there is no enough space.", callFailureHandler: nil)
                 }
@@ -173,7 +165,7 @@ class DataModel: NSObject {
         :param: success: Void->Void Success handler.
         :param: fail: NSError->Void Failure handler.
     */
-    private static func downloadCatalog(success successHandler: Void->Void,
+    internal static func downloadCatalog(success successHandler: Void->Void,
                                         fail failureHandler: NSError->Void) {
 
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
@@ -211,9 +203,11 @@ class DataModel: NSObject {
             DataModel.restore()
     */
     internal static func restore() {
-        if let filePath = DataModel.getDataFilePath() {
-            if NSFileManager.defaultManager().fileExistsAtPath(filePath) {
-                if let data = NSData(contentsOfFile: filePath) {
+        if let fileURL = DataModel.getDataFileURL(),
+            path = fileURL.path {
+
+            if NSFileManager.defaultManager().fileExistsAtPath(path) {
+                if let data = NSData(contentsOfURL: fileURL) {
                     let unarchiver = NSKeyedUnarchiver(forReadingWithData: data)
 
                     if let allRecords = unarchiver.decodeObjectForKey("AllRecords") as? [Record] {
@@ -288,32 +282,35 @@ class DataModel: NSObject {
     */
     internal static func playlistAddRecord(record: Record) {
         playlist.append(record)
-        record.startDownloading()
+
+        if !record.isStoredLocally {
+            record.startDownloading()
+        }
     }
 
     // #MARK: - helpers
 
     /**
-        Rreturns path to local file DataModel.plist.
+        Rreturns URL to local file DataModel.plist.
 
         Usage:
 
-            DataModel.getDataFilePath()
+            DataModel.getDataFileURL()
 
         :returns: String?
     */
-    private static func getDataFilePath() -> String? {
+    private static func getDataFileURL() -> NSURL? {
         if let documentsDir = DataModel.documementsDirectory() {
-            let filePath = documentsDir.stringByAppendingPathComponent("DataModel.plist")
-            // println("filePath:\(filePath)")
-            return filePath
+            let fileURL = documentsDir.URLByAppendingPathComponent("DataModel.plist")
+            println("fileURL:\(fileURL)")
+            return fileURL
         }
 
         return nil
     }
 
     /**
-        Rreturns path to documents directory.
+        Rreturns URL to documents directory.
 
         Usage:
 
@@ -321,15 +318,18 @@ class DataModel: NSObject {
 
         :returns: String?
     */
-    private static func documementsDirectory() -> String? {
-        if let paths = NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true) as? [String] {
-            return paths[0]
-        }
-        else {
-            DataModel.logError(.NSSearchPathFailed, withMessage: "NSSearchPathForDirectoriesInDomains failed.", callFailureHandler: nil)
+    internal static func documementsDirectory() -> NSURL? {
+        let fileManager = NSFileManager.defaultManager()
+        let documentDirs = fileManager.URLsForDirectory(.DocumentDirectory, inDomains: .UserDomainMask)
+
+        if documentDirs.count == 0 {
+            DataModel.logError(.DocumentDirsIsEmpty, withMessage: "File manager returned empty document directory array.", callFailureHandler: nil)
+            return nil
         }
 
-        return nil
+        let documentDir = documentDirs[0] as! NSURL
+
+        return documentDir
     }
 
     /**

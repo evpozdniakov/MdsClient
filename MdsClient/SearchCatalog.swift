@@ -53,23 +53,36 @@ class SearchCatalog: UIViewController {
 
     // #MARK: - redraw
 
+    /**
+        Set table view margins to avoid top space taken by search and bottom place taken by tabs.
+
+        Usage:
+
+            setTableViewMargings()
+    */
     func setTableViewMargings() {
-        // assert(isMainThread())
+        assert(appIsMainThread())
 
         tableView.contentInset = UIEdgeInsets(top: 66, left: 0, bottom: 49, right: 0)
     }
 
-    func redrawRecordsAtIndexPaths(indexPaths: [NSIndexPath]) {
-        if !isMainThread() {
-            dispatch_async(dispatch_get_main_queue()) {
-                self.redrawRecordsAtIndexPaths(indexPaths)
-            }
-            return
-        }
+    /**
+        Asks table view to redraw some cells.
 
-        tableView.beginUpdates()
-        tableView.reloadRowsAtIndexPaths(indexPaths, withRowAnimation: .None)
-        tableView.endUpdates()
+        **Warning:** Switches to main thread, which might be required.
+
+        Usage:
+
+            redrawRecordsAtIndexPaths(indexPaths)
+
+        :param: indexPaths: [NSIndexPath]
+    */
+    func redrawRecordsAtIndexPaths(indexPaths: [NSIndexPath]) {
+        appMainThread() {
+            self.tableView.beginUpdates()
+            self.tableView.reloadRowsAtIndexPaths(indexPaths, withRowAnimation: .None)
+            self.tableView.endUpdates()
+        }
     }
 
     /**
@@ -86,6 +99,17 @@ class SearchCatalog: UIViewController {
 
     // #MARK: - playback
 
+    /**
+        Finds record associated to clicked cell. Starts or resume playing the record.
+        Stops playing previously played record in case.
+        Stores playing record into DataModel.playingRecord
+
+        Usage:
+
+            startOrResumePlaybackOfRecordAssociatedWithButton(playBtn)
+
+        :param: playBtn: UIButton
+    */
     func startOrResumePlaybackOfRecordAssociatedWithButton(playBtn: UIButton) {
         assert(player != nil)
 
@@ -107,7 +131,7 @@ class SearchCatalog: UIViewController {
                     // stop playing previous record
                     player!.stop()
 
-                    if let index = DataModel.playingRecordIndex {
+                    if let index = previousRecord!.filteredRecordsIndex {
                         // store previous record cell indexPath
                         indexPathsToRedraw.append(NSIndexPath(forRow: index, inSection: 0))
                     }
@@ -116,23 +140,17 @@ class SearchCatalog: UIViewController {
                 // start playing record
                 DataModel.playingRecord = record
 
-                var error: NSError?
-
-                record.getFirstPlayableTrack() { track, error in
-                    if let error = error {
-                        // println("!!!!!!retry to play record (make separate function startPlayingRecord")
-                        // #FIXME: retry to play record (make separate function startPlayingRecord)
-                    }
-                    else if let track = track {
+                record.getFirstPlayableTrack(
+                    success: { track in
                         self.player!.startPlayback(url: track.url)
-                    }
-                    else {
-                        // no tracks found
-                        appDisplayError("Файл mp3 не найден на сервере.", inViewController: self) {
+                    },
+                    fail: { error in
+                        // #TODO: find all error message texts and move them to enum
+                        let msg = "Unable to download audio file of the record \"\(record.title)\""
+                        appDisplayError(msg, inViewController: self) {
                             self.redrawRecordsAtIndexPaths([indexPath])
                         }
-                    }
-                }
+                    })
             }
 
             // redraw
@@ -141,6 +159,15 @@ class SearchCatalog: UIViewController {
         }
     }
 
+    /**
+        Puts playback on pause.
+
+        Usage:
+
+            pausePlaybackOfRecordAssociatedWithButton(pauseBtn)
+
+        :param: pauseBtn: UIButton
+    */
     func pausePlaybackOfRecordAssociatedWithButton(pauseBtn: UIButton) {
         assert(player != nil)
 
@@ -156,27 +183,44 @@ class SearchCatalog: UIViewController {
 
     // #MARK: miscellaneous
 
-    // #TODO: think about moving this method to AppDelegate. We might need it when application state is restored.
-    /* Можно сделать два метода у DataModel. Один будет восстанавливать состояние из файла DataModel.plist, другой будет загружать записи из сети. Первый можно запускать из AppDelegate синхронно. Второй можно запускать только из SearchCatalog (если файла DataModel.plist еще нет, то пользователь окажется в SearchCatalog, он не сможет оказаться в каком-то другом вью контроллере.) */
-    func loadMdsRecordsOnce() {
+    /**
+        Downloads MDS catalog (records). Blocks UI before start, unblocks when done.
+        In case of error displays the error message. Asks user if app should retry.
+
+        **Warning:** Suppose to be run only once.
+
+        Usage:
+
+            loadMdsRecordsOnce()
+    */
+    private func loadMdsRecordsOnce() {
         if DataModel.allRecords.count == 0 {
             // #TODO: block UI
             DataModel.downloadCatalog(
                 success: {
                     // #TODO: (do not forget switch to main thread!) unblock UI
                 },
-                fail: {
-                    appDisplayError(errorMsg, inViewController: self) {
-                        // #TODO: (do not forget switch to main thread!) replace alert by confirmation dialog, then call self.loadMdsRecordsOnce() again?
+                fail: { error in
+                    appMainThread() {
+                        let msg = "Unable to download MDS catalog. The error is \(error.domain)-\(error.code). Application will retry to download catalog. Make sure you have access to the Internet."
+
+                        appDisplayError(msg, inViewController: self, withHandler: self.loadMdsRecordsOnce)
                     }
                 })
         }
     }
 
-    func isMainThread() -> Bool {
-        return NSThread.currentThread().isMainThread
-    }
+    /**
+        Finds and returns table view cell by button it contains.
 
+        Usage:
+
+            getCellContainingButton(btn)
+
+        :param: btn: UIButton
+
+        :returns: UITableViewCell?
+    */
     func getCellContainingButton(btn: UIButton) -> UITableViewCell? {
         if let cellContent = btn.superview,
             buttonsWrapper = cellContent.superview,
@@ -187,6 +231,17 @@ class SearchCatalog: UIViewController {
         return nil
     }
 
+    /**
+        Finds record associated by table cell.
+
+        Usage:
+
+            getRecordAssociatedWithCell(cell)
+
+        :param: cell: UITablveViewCell
+
+        :returns: Record?
+    */
     func getRecordAssociatedWithCell(cell: UITableViewCell) -> Record? {
         assert(DataModel.filteredRecords.count > 0)
 
@@ -211,8 +266,10 @@ extension SearchCatalog: RemoteMp3PlayerDelegate {
     func remoteMp3Player(player: RemoteMp3Player, statusChanged playbackStatus: MyAVPlayerStatus) {
 
         // println("================ remoteMp3Player status changed: \(playbackStatus.rawValue)")
-        if let playingRecordIndex = DataModel.playingRecordIndex {
-            let indexPath = NSIndexPath(forRow: playingRecordIndex, inSection: 0)
+        if let playingRecord = DataModel.playingRecord,
+            index = playingRecord.filteredRecordsIndex {
+
+            let indexPath = NSIndexPath(forRow: index, inSection: 0)
 
             redrawRecordsAtIndexPaths([indexPath])
         }
@@ -232,7 +289,7 @@ extension SearchCatalog: UITableViewDataSource {
     }
 
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
-        assert(isMainThread())
+        assert(appIsMainThread())
         assert(player != nil)
 
         let cellId = CellId.recordCell
@@ -265,7 +322,7 @@ extension SearchCatalog: UITableViewDataSource {
 
             let isNowPlayingRecord = (DataModel.playingRecord === record)
 
-            if record.hasNoTracks {
+            if record.hasNoPlayableTrack {
                 if !playBtn.hidden { playBtn.hidden = true }
                 if !pauseBtn.hidden { pauseBtn.hidden = true }
                 if activityIndicator.isAnimating() { activityIndicator.stopAnimating() }

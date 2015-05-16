@@ -340,11 +340,12 @@ extension Ajax: NSURLSessionDownloadDelegate {
 
             if let error = error {
                 appLogError(error, withMessage: "Can't move file to [\(localURL)].", callFailureHandler: failureHandler)
+
+                if let failureHandler = failureHandler {
+                    failureHandler(error)
+                }
             }
-
-            // fixme: shouldn't we avoid call completionHandler in case of error?
-
-            if let completionHandler = completionHandler {
+            else if let completionHandler = completionHandler {
                 completionHandler()
             }
         }

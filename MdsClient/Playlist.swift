@@ -13,15 +13,28 @@ class Playlist: UIViewController {
 
     var cellReloadTimer: NSTimer?
     var storedLocallyList: [Record]?
-    var hasNoTracksList: [Record]?
+    var hasNoPlayableTrackList: [Record]?
+    var player: RemoteMp3Player?
 
     @IBOutlet weak var playlistTable: UITableView!
+
+    // #MARK: - IB Actions
+
+    @IBAction func playBtnClicked(sender: UIButton) {
+        startOrResumePlaybackOfRecordAssociatedWithButton(sender)
+    }
+
+    @IBAction func pauseBtnClicked(sender: UIButton) {
+        pausePlaybackOfRecordAssociatedWithButton(sender)
+    }
 
     // #MARK: - UIViewController methods
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        player = RemoteMp3Player()
+        player!.delegate = self
     }
 
     override func viewWillAppear(animated: Bool) {
@@ -29,13 +42,13 @@ class Playlist: UIViewController {
 
         // println("playlist will appear")
         storedLocallyList = [Record]()
-        hasNoTracksList = [Record]()
+        hasNoPlayableTrackList = [Record]()
         for record in DataModel.playlist {
             if record.isStoredLocally {
                 storedLocallyList!.append(record)
             }
-            else if record.hasNoTracks {
-                hasNoTracksList!.append(record)
+            else if record.hasNoPlayableTrack {
+                hasNoPlayableTrackList!.append(record)
             }
         }
 
@@ -52,7 +65,7 @@ class Playlist: UIViewController {
         // println("playlist did disappear")
         stopCellReloadTimer()
         storedLocallyList = nil
-        hasNoTracksList = nil
+        hasNoPlayableTrackList = nil
     }
 
     // #MARK: - run/stop cell reloader
@@ -91,6 +104,79 @@ class Playlist: UIViewController {
         }
     }
 
+    // #MARK: - playback
+
+    /**
+        Finds record associated to clicked cell. Starts or resume playing the record.
+        Stops playing previously played record in case.
+        Stores playing record into DataModel.playingRecord
+
+        Usage:
+
+            startOrResumePlaybackOfRecordAssociatedWithButton(playBtn)
+
+        :param: playBtn: UIButton
+    */
+    func startOrResumePlaybackOfRecordAssociatedWithButton(playBtn: UIButton) {
+        assert(player != nil)
+
+        println("call startOrResumePlaybackOfRecordAssociatedWithButton")
+
+        if let cell = getCellContainingButton(playBtn),
+            record = getRecordAssociatedWithCell(cell),
+            indexPath = playlistTable.indexPathForCell(cell) {
+
+            let previousRecord = DataModel.playingRecord
+            var indexPathsToRedraw = [NSIndexPath]()
+
+            indexPathsToRedraw.append(indexPath)
+
+            if record == previousRecord {
+                // resume playback
+                player!.resumePlayback()
+            }
+            else {
+                if previousRecord != nil {
+                    // stop playing previous record
+                    player!.stop()
+
+                    if let index = previousRecord!.playlistIndex {
+                        // store previous record cell indexPath
+                        indexPathsToRedraw.append(NSIndexPath(forRow: index, inSection: 0))
+                    }
+                }
+
+                assert(record.localURL != nil)
+
+                // start playing record
+                DataModel.playingRecord = record
+                player!.startPlayback(url: record.localURL!)
+            }
+        }
+    }
+
+    /**
+        Puts playback on pause.
+
+        Usage:
+
+            pausePlaybackOfRecordAssociatedWithButton(pauseBtn)
+
+        :param: pauseBtn: UIButton
+    */
+    func pausePlaybackOfRecordAssociatedWithButton(pauseBtn: UIButton) {
+        assert(player != nil)
+
+        if let cell = getCellContainingButton(pauseBtn),
+            record = getRecordAssociatedWithCell(cell),
+            indexPath = playlistTable.indexPathForCell(cell) {
+
+            assert(record == DataModel.playingRecord)
+
+            player!.pausePlayback()
+        }
+    }
+
     // #MARK: - redraw
 
     /**
@@ -103,7 +189,7 @@ class Playlist: UIViewController {
     */
     func reloadDownloadingRecordCells() {
         assert(storedLocallyList != nil)
-        assert(hasNoTracksList != nil)
+        assert(hasNoPlayableTrackList != nil)
 
         var indexPaths = [NSIndexPath]()
 
@@ -111,11 +197,11 @@ class Playlist: UIViewController {
             if record.isDownloading {
                 indexPaths.append(NSIndexPath(forRow: i, inSection: 0))
             }
-            else if record.hasNoTracks && find(hasNoTracksList!, record) == nil {
+            else if record.hasNoPlayableTrack && find(hasNoPlayableTrackList!, record) == nil {
                 // reload one last time
                 // println("-----------reload last one time row: \(i)")
                 indexPaths.append(NSIndexPath(forRow: i, inSection: 0))
-                hasNoTracksList!.append(record)
+                hasNoPlayableTrackList!.append(record)
             }
             else if record.isStoredLocally && find(storedLocallyList!, record) == nil {
                 // reload one last time
@@ -127,31 +213,100 @@ class Playlist: UIViewController {
 
         redrawRecordsAtIndexPaths(indexPaths)
 
-        if storedLocallyList!.count + hasNoTracksList!.count == DataModel.playlist.count {
+        if storedLocallyList!.count + hasNoPlayableTrackList!.count == DataModel.playlist.count {
             // println("-------------stopCellReloadTimer")
             stopCellReloadTimer()
         }
     }
 
+    /**
+        Asks table view to redraw some cells.
 
+        **Warning:** Switches to main thread, which might be required.
+
+        Usage:
+
+            redrawRecordsAtIndexPaths(indexPaths)
+
+        :param: indexPaths: [NSIndexPath]
+    */
     func redrawRecordsAtIndexPaths(indexPaths: [NSIndexPath]) {
-        assert(isMainThread())
-
-        /* if !isMainThread() {
-            dispatch_async(dispatch_get_main_queue()) {
-                self.redrawRecordsAtIndexPaths(indexPaths)
-            }
-            return
-        } */
-
-        playlistTable.beginUpdates()
-        playlistTable.reloadRowsAtIndexPaths(indexPaths, withRowAnimation: .None)
-        playlistTable.endUpdates()
+        appMainThread() {
+            self.playlistTable.beginUpdates()
+            self.playlistTable.reloadRowsAtIndexPaths(indexPaths, withRowAnimation: .None)
+            self.playlistTable.endUpdates()
+        }
     }
+
     // #MARK: miscellaneous
 
-    func isMainThread() -> Bool {
-        return NSThread.currentThread().isMainThread
+    /**
+        Finds and returns table view cell by button it contains.
+
+        Usage:
+
+            getCellContainingButton(btn)
+
+        :param: btn: UIButton
+
+        :returns: UITableViewCell?
+    */
+    func getCellContainingButton(btn: UIButton) -> UITableViewCell? {
+        if let cellContent = btn.superview,
+            buttonsWrapper = cellContent.superview,
+            cell = buttonsWrapper.superview as? UITableViewCell {
+                return cell
+        }
+
+        return nil
+    }
+
+    /**
+        Finds record associated by table cell.
+
+        Usage:
+
+            getRecordAssociatedWithCell(cell)
+
+        :param: cell: UITablveViewCell
+
+        :returns: Record?
+    */
+    func getRecordAssociatedWithCell(cell: UITableViewCell) -> Record? {
+        assert(DataModel.playlist.count > 0)
+
+        if let indexPath = playlistTable.indexPathForCell(cell) {
+            let recordIndex = indexPath.row
+
+            if recordIndex < DataModel.playlist.count {
+                return DataModel.playlist[recordIndex]
+            }
+        }
+
+        // if for the record wasn't found for some reason, reload table data
+        playlistTable.reloadData()
+
+        return nil
+    }
+}
+
+// #MARK: - RemoteMp3PlayerDelegate
+
+extension Playlist: RemoteMp3PlayerDelegate {
+    func remoteMp3Player(player: RemoteMp3Player, statusChanged playbackStatus: MyAVPlayerStatus) {
+
+        // println("================ remoteMp3Player status changed: \(playbackStatus.rawValue)")
+        if let playingRecord = DataModel.playingRecord,
+            index = playingRecord.playlistIndex {
+
+            let indexPath = NSIndexPath(forRow: index, inSection: 0)
+
+            redrawRecordsAtIndexPaths([indexPath])
+        }
+    }
+
+    func remoteMp3Player(player: RemoteMp3Player, raisedError error: NSError, withMessage message: String) {
+        appLogError(error, withMessage: message)
     }
 }
 
@@ -189,19 +344,38 @@ extension Playlist: UITableViewDataSource {
             progressLbl.hidden = true
             activityIndicator.stopAnimating()
 
-            if record.hasNoTracks {
+            if record.hasNoPlayableTrack {
+                // println("caseAAA")
                 progressLbl.text = "!"
                 progressLbl.hidden = false
             }
             else if record.isDownloading {
+                // println("caseBBBB")
                 let progressPercent = lroundf(record.downloadingProgress! * 100)
                 progressLbl.text = "\(progressPercent)%"
                 progressLbl.hidden = false
             }
             else if record.isStoredLocally {
-                playBtn.hidden = false
+                // println("caseCCCC")
+                if DataModel.playingRecord === record {
+                    // println("-------- REDRAW CELL of playing record (index: \(indexPath.row), status: \(playbackStatus.rawValue))")
+                    let playbackStatus = player!.playbackStatus
+
+                    switch playbackStatus {
+                    case .Playing, .Seeking:
+                        pauseBtn.hidden = false
+                    case .Paused:
+                        playBtn.hidden = false
+                    default:
+                        activityIndicator.startAnimating()
+                    }
+                }
+                else {
+                    playBtn.hidden = false
+                }
             }
             else {
+                // println("caseDDD")
                 activityIndicator.startAnimating()
             }
         }
@@ -219,5 +393,4 @@ extension Playlist: UITableViewDataSource {
 // #MARK: - UITableViewDelegate
 
 extension Playlist: UITableViewDelegate {
-
 }

@@ -237,6 +237,7 @@
                                                                 <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
                                                             </state>
                                                             <connections>
+                                                                <action selector="playBtnClicked:" destination="geD-fP-W4O" eventType="touchUpInside" id="6EA-OM-prA"/>
                                                                 <action selector="playBtnClicked:" destination="BYZ-38-t0r" eventType="touchUpInside" id="z2Y-XP-lDa"/>
                                                             </connections>
                                                         </button>
@@ -250,6 +251,7 @@
                                                                 <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
                                                             </state>
                                                             <connections>
+                                                                <action selector="pauseBtnClicked:" destination="geD-fP-W4O" eventType="touchUpInside" id="GYu-U8-kRS"/>
                                                                 <action selector="pauseBtnClicked:" destination="BYZ-38-t0r" eventType="touchUpInside" id="x5X-Il-zRb"/>
                                                             </connections>
                                                         </button>
@@ -263,7 +265,7 @@
                                                         <label hidden="YES" opaque="NO" userInteractionEnabled="NO" tag="600" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="99%" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="ltJ-fN-8Jh" userLabel="Downloading progress 600">
                                                             <rect key="frame" x="11" y="16" width="22" height="12"/>
                                                             <fontDescription key="fontDescription" type="system" pointSize="10"/>
-                                                            <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                                                            <color key="textColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                                             <nil key="highlightedColor"/>
                                                         </label>
                                                     </subviews>
@@ -320,9 +322,9 @@
                                             </constraints>
                                             <variation key="default">
                                                 <mask key="constraints">
-                                                    <exclude reference="xDv-DC-MJ8"/>
                                                     <exclude reference="WOa-b9-FaJ"/>
                                                     <exclude reference="aqM-gg-wgp"/>
+                                                    <exclude reference="xDv-DC-MJ8"/>
                                                 </mask>
                                             </variation>
                                         </tableViewCellContentView>

@@ -28,7 +28,7 @@ class Record: NSObject, NSCoding {
         case TrackUrlHasNoFileName = 4
         case CantRemoveLocallyStoredFile = 5
         case LocalUrlIsNil = 6
-        case DocumentDirsIsEmpty = 7
+        // case DocumentDirsIsEmpty = 7
         case TrackUrlHasNoExtension = 8
         case NoTracksFoundInJson = 9
         case PlayableTrackNotFound = 10
@@ -41,8 +41,8 @@ class Record: NSObject, NSCoding {
     var year: String
     var station: String
     var tracks: [Track]?
-    var hasNoTracks: Bool
-    var localURL: NSURL?
+    var hasNoPlayableTrack: Bool
+    var localFileName: String?
 
     // #TODO: think how to store those vars?
     var downloadingProgress: Float?
@@ -50,6 +50,21 @@ class Record: NSObject, NSCoding {
 
     var isDownloading: Bool {
         return self.downloadingProgress != nil
+    }
+    var localURL: NSURL? {
+        if let fileName = self.localFileName,
+            documentDir = DataModel.documementsDirectory() {
+
+            let localURL = documentDir.URLByAppendingPathComponent(fileName)
+
+            println("localFileName: \(localFileName)")
+            println("documentDir: \(documentDir)")
+            println("localURL: \(localURL)")
+
+            return localURL
+        }
+
+        return nil
     }
     var isStoredLocally: Bool {
         if let localURL = self.localURL,
@@ -60,11 +75,21 @@ class Record: NSObject, NSCoding {
         return false
     }
 
-    var downloadTrackRetryCounter = 0
+    var downloadTracksJsonRetryCounter = 0
+    var downloadTracksJsonRetrySuccess: ([Track]->Void)?
+    var downloadTracksJsonRetryFail: (NSError->Void)?
+
+    var filteredRecordsIndex: Int? {
+        return find(DataModel.filteredRecords, self)
+    }
+
+    var playlistIndex: Int? {
+        return find(DataModel.playlist, self)
+    }
 
     // #MARK: - initializers
 
-    init(id: Int, author: String, title: String, readDate: NSDate?, year: String, station: String, tracks: [Track]?, hasNoTracks: Bool) {
+    init(id: Int, author: String, title: String, readDate: NSDate?, year: String, station: String, tracks: [Track]?, hasNoPlayableTrack: Bool) {
         self.id = id
         self.author = author
         self.title = title
@@ -72,18 +97,19 @@ class Record: NSObject, NSCoding {
         self.year = year
         self.station = station
         self.tracks = tracks
-        self.hasNoTracks = hasNoTracks
+        self.hasNoPlayableTrack = hasNoPlayableTrack
     }
 
     /**
         We call this initializer from DataModel.fillRecordsWithJson().
-        Method calls main initializer with two more properties: tracks & hasNoTracks.
+        Method calls main initializer with two more properties: tracks & hasNoPlayableTrack.
     */
     convenience init(id: Int, author: String, title: String, readDate dateString: String, station: String) {
         var readDate: NSDate?
         var year = ""
         var tracks: [Track]?
-        let hasNoTracks = false
+        let hasNoPlayableTrack = false
+        var localFileName: String?
         var localURL: NSURL?
         let dateFormatter = NSDateFormatter()
 
@@ -95,7 +121,7 @@ class Record: NSObject, NSCoding {
             year = String(components.year)
         }
 
-        self.init(id: id, author: author, title: title, readDate: readDate, year: year, station: station, tracks: tracks, hasNoTracks: hasNoTracks)
+        self.init(id: id, author: author, title: title, readDate: readDate, year: year, station: station, tracks: tracks, hasNoPlayableTrack: hasNoPlayableTrack)
     }
 
     required init(coder aDecoder: NSCoder) {
@@ -106,8 +132,8 @@ class Record: NSObject, NSCoding {
         year = aDecoder.decodeObjectForKey("Year") as! String
         station = aDecoder.decodeObjectForKey("Station") as! String
         tracks = aDecoder.decodeObjectForKey("Tracks") as? [Track]
-        hasNoTracks = aDecoder.decodeBoolForKey("HasNoTracks")
-        localURL = aDecoder.decodeObjectForKey("LocalURL") as? NSURL
+        hasNoPlayableTrack = aDecoder.decodeBoolForKey("HasNoPlayableTrack")
+        localFileName = aDecoder.decodeObjectForKey("LocalFileName") as? String
 
         super.init()
     }
@@ -120,8 +146,8 @@ class Record: NSObject, NSCoding {
         aCoder.encodeObject(year, forKey: "Year")
         aCoder.encodeObject(station, forKey: "Station")
         aCoder.encodeObject(tracks, forKey: "Tracks")
-        aCoder.encodeBool(hasNoTracks, forKey: "HasNoTracks")
-        aCoder.encodeObject(localURL, forKey: "LocalURL")
+        aCoder.encodeBool(hasNoPlayableTrack, forKey: "HasNoPlayableTrack")
+        aCoder.encodeObject(localFileName, forKey: "LocalFileName")
     }
 
     // #MARK: - work with tracks
@@ -142,7 +168,6 @@ class Record: NSObject, NSCoding {
                 fail: { error in
                     //
                 })
-            }
 
         :param: success: Track->Void Completion handler.
         :param: fail: NSError->Void Failure handler.
@@ -150,12 +175,13 @@ class Record: NSObject, NSCoding {
     internal func getFirstPlayableTrack(success successHandler: Track->Void,
                                         fail failureHandler: NSError->Void) {
 
+
         // println("call Playlist.getFirstPlayableTrack() ")
         if let tracks = tracks {
             // tracks has been downloaded earlier
             var error: NSError?
 
-            if let track = getAnyTrackWithHttpProtocol(tracks, &error) {
+            if let track = getAnyTrackWithHttpProtocol(tracks, error: &error) {
                 successHandler(track)
             }
             else if let error = error {
@@ -174,9 +200,9 @@ class Record: NSObject, NSCoding {
                     self.getFirstPlayableTrack(success: successHandler, fail: failureHandler)
                 },
                 fail: { error in
+                    self.hasNoPlayableTrack = true
                     failureHandler(error)
-                }
-            }
+                })
         }
     }
 
@@ -196,7 +222,7 @@ class Record: NSObject, NSCoding {
 
         :returns: Track?
     */
-    private func getAnyTrackWithHttpProtocol(tracks: [Track], 
+    private func getAnyTrackWithHttpProtocol(tracks: [Track],
                                             error errorPointer: NSErrorPointer) -> Track? {
 
         for track in tracks {
@@ -322,7 +348,6 @@ class Record: NSObject, NSCoding {
                 fail: { error in
                     // failure
                 })
-            }
 
         :param: success: [Track]->Void Completion handler.
         :param: fail: NSError->Void Failure handler.
@@ -350,7 +375,26 @@ class Record: NSObject, NSCoding {
                         successHandler(tracks)
                     }
                     else if let error = error {
-                        failureHandler(error)
+                        if self.downloadTracksJsonRetryCounter < 3 {
+                            self.downloadTracksJsonRetryCounter++
+
+                            if self.downloadTracksJsonRetryCounter == 1 {
+                                self.downloadTracksJsonRetrySuccess = successHandler
+                                self.downloadTracksJsonRetryFail = failureHandler
+                            }
+
+                            appMainThread() {
+                                // 1 second delay between requests
+                                let i = NSTimeInterval(1.0)
+                                // TODO: invalidate timer if app terminates
+                                NSTimer.scheduledTimerWithTimeInterval(i, target: self, selector: Selector("downloadAndParseTracksJsonRetry"), userInfo: nil, repeats: false)
+                            }
+                        }
+                        else {
+                            self.downloadTracksJsonRetrySuccess = nil
+                            self.downloadTracksJsonRetryFail = nil
+                            failureHandler(error)
+                        }
                     }
                     else {
                         // must never happen
@@ -363,7 +407,33 @@ class Record: NSObject, NSCoding {
         }
     }
 
+    /**
+        Helper which calls downloadAndParseTracksJson().
+
+        Usage:
+
+            downloadAndParseTracksJsonRetry()
+    */
+    func downloadAndParseTracksJsonRetry() {
+        if let successHandler = downloadTracksJsonRetrySuccess,
+            failureHandler = downloadTracksJsonRetryFail {
+
+            downloadAndParseTracksJson(success: successHandler, fail: failureHandler)
+        }
+    }
+
+    /**
+        Delete local copy, if exists.
+
+        Usage:
+
+            record.deleteLocalCopy()
+    */
     func deleteLocalCopy() {
+        if !isStoredLocally {
+            return
+        }
+
         if let localURL = localURL,
             path = localURL.path {
 
@@ -433,7 +503,6 @@ class Record: NSObject, NSCoding {
 extension Record: RecordDownload {
     /**
         Gets first track and initiates track downloading.
-        Marks record as hasNotTracks if no tracks found.
 
         **Warning:** Works asynchronously.
 
@@ -442,21 +511,8 @@ extension Record: RecordDownload {
             startDownloading()
     */
     func startDownloading() {
-        println("call Playlist.startDownloading() for record: \(title)")
-        getFirstPlayableTrack() { track, error in
-            if let error = error {
-                if self.downloadTrackRetryCounter < 3 {
-                    // let i = NSTimeInterval(0.25)
-                    NSTimer.scheduledTimerWithTimeInterval(1.0, target: self, selector: Selector("startDownloading"), userInfo: nil, repeats: true)
-                    self.downloadTrackRetryCounter++
-                    println("------- schedule retry \(self.downloadTrackRetryCounter)")
-                }
-                else {
-                    println("---------- no tracks after 3 retries.")
-                    self.hasNoTracks = true
-                }
-            }
-            else if let track = track {
+        getFirstPlayableTrack(
+            success: { track in
                 // println("track found for record: \(self.title)")
                 // make sure the record is still in playlist
                 if DataModel.playlistContainsRecord(self) {
@@ -466,16 +522,14 @@ extension Record: RecordDownload {
                 /* else {
                     // println("it looks like the record is not in playlist any more")
                 } */
-            }
-            else {
+            },
+            fail: { error in
                 // println("---has no tracks for record: \(self.title)---")
-                self.hasNoTracks = true
-                // #TODO: the problem, Record.swift is not a controller, so it can't use appDisplayError, cause it requires inViewController.
-                // #TODO: another problem - how to reload table cell?
                 // appDisplayError("Аудио-файл не найден на сервере.", inViewController: self) {
                 // }
-            }
-        }
+                // #TODO: the problem, Record.swift is not a controller, so it can't use appDisplayError, cause it requires inViewController.
+                // #TODO: another problem - how to reload table cell?
+            })
     }
 
     /**
@@ -489,38 +543,32 @@ extension Record: RecordDownload {
     */
     func downloadTrack(track: Track) {
         // println("call downloadTrack, url: \(track.url)")
-        let fileManager = NSFileManager.defaultManager()
-        let documentDirs = fileManager.URLsForDirectory(.DocumentDirectory, inDomains: .UserDomainMask)
-
-        if documentDirs.count == 0 {
-            Record.logError(.DocumentDirsIsEmpty, withMessage: "File manager returned empty document directory array.", callFailureHandler: nil)
-            return
-        }
-
-        let documentDir = documentDirs[0] as! NSURL
-
         if track.url.pathExtension == "" {
             Record.logError(.TrackUrlHasNoExtension, withMessage: "Track url [\(track.url)] has no extension.", callFailureHandler: nil)
             return
         }
 
         if let fileName = track.url.lastPathComponent {
-            localURL = documentDir.URLByAppendingPathComponent(fileName)
+            localFileName = fileName
 
-            downloadTask = Ajax.downloadFileFromUrl(track.url, saveTo: localURL!,
-                reportingProgress: reportDownloadingProgress,
-                reportingCompletion: {
-                    // println("file dowloaded and may be saved")
-                    // #FIXME: check if file has been saved to localURL
-                    self.downloadTask = nil
-                    self.downloadingProgress = nil
-                },
-                reportingFailure: { error in
-                    // #FIXME: retry up to 3 times.
-                    self.downloadingProgress = nil
-                 })
+            if let localURL = localURL {
+                println("localURL before create task: \(localURL)")
+                downloadTask = Ajax.downloadFileFromUrl(track.url, saveTo: localURL,
+                    reportingProgress: reportDownloadingProgress,
+                    reportingCompletion: {
+                        self.downloadTask = nil
+                        self.downloadingProgress = nil
+                    },
+                    reportingFailure: { error in
+                        // #TODO: display error message to the user, ask him for download restart
+                        self.downloadingProgress = nil
+                     })
 
-            // println("downloadTask created: \(downloadTask)")
+                // println("downloadTask created: \(downloadTask)")
+            }
+            else {
+                Record.logError(.LocalUrlIsNil, withMessage: "Local url is nil for some reason, record title: [\(title)]", callFailureHandler: nil)
+            }
         }
         else {
             Record.logError(.TrackUrlHasNoFileName, withMessage: "Track url [\(track.url)] has no file name.", callFailureHandler: nil)
@@ -533,7 +581,7 @@ extension Record: RecordDownload {
         **Warning:** Method is called from Ajax instance. Do not call directly!
     */
     func reportDownloadingProgress(bytesDownloaded: Int64, bytesTotal: Int64) {
-        // println("call reportDownloadingProgress")
+        // println("+++++++++call reportDownloadingProgress")
 
         downloadingProgress = Float(bytesDownloaded) / Float(bytesTotal)
         // println(String(format: "%f", downloadingProgress!))
