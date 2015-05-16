@@ -49,6 +49,7 @@ class SearchCatalog: UIViewController {
         player!.delegate = self
 
         loadMdsRecordsOnce()
+        toggleDisablePlaylistTab()
     }
 
     // #MARK: - redraw

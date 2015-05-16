@@ -17,6 +17,9 @@ class DataModel: NSObject {
     static var allRecords = [Record]()
     static var filteredRecords = [Record]()
     static var playlist = [Record]()
+
+    /// Contains id of every record in playlist.
+    static var playlistRecordIds = [Int]()
     static var playingRecord: Record?
 
     /**
@@ -123,8 +126,7 @@ class DataModel: NSObject {
     /**
         Will store DataModel state in local file DataModel.plist.
         - records under key "AllRecords"
-        TODO: store playlist record indexes
-        - playlist under key ???
+        - playlistRecordIds under key "PlaylistRecordIds"
 
         Usage:
 
@@ -136,6 +138,7 @@ class DataModel: NSObject {
                 let data = NSMutableData()
                 let archiver = NSKeyedArchiver(forWritingWithMutableData: data)
                 archiver.encodeObject(allRecords, forKey: "AllRecords")
+                archiver.encodeObject(playlistRecordIds, forKey: "PlaylistRecordIds")
                 archiver.finishEncoding()
                 let dataWrittenSuccessfully = data.writeToURL(fileURL, atomically: true)
                 if !dataWrittenSuccessfully {
@@ -196,7 +199,10 @@ class DataModel: NSObject {
     }
 
     /**
-        Loads data from DataModel.plist, if exists.
+        Loads data from DataModel.plist, if exists:
+        - allRecords
+        - playlistRecordIds
+        Creates playlist using playlistRecordIds, starts downloading records in playlist if they are not stored locally.
 
         Usage:
 
@@ -210,14 +216,23 @@ class DataModel: NSObject {
                 if let data = NSData(contentsOfURL: fileURL) {
                     let unarchiver = NSKeyedUnarchiver(forReadingWithData: data)
 
-                    if let allRecords = unarchiver.decodeObjectForKey("AllRecords") as? [Record] {
+                    if let allRecords = unarchiver.decodeObjectForKey("AllRecords") as? [Record],
+                        playlistRecordIds = unarchiver.decodeObjectForKey("PlaylistRecordIds") as? [Int] {
+
                         self.allRecords = allRecords
+                        self.playlistRecordIds = playlistRecordIds
+                        for record in self.allRecords {
+                            if let index = find(self.playlistRecordIds, record.id) {
+                                self.playlist.append(record)
+                                if !record.isStoredLocally {
+                                    record.startDownloading()
+                                }
+                            }
+                        }
                     }
                     else {
                         DataModel.logError(.CantConvertUnarchivedData, withMessage: "Cant convert unarchived data to [Record].", callFailureHandler: nil)
                     }
-
-                    // #TODO: restore playlist as well
 
                     unarchiver.finishDecoding()
                 }
@@ -251,8 +266,8 @@ class DataModel: NSObject {
     }
 
     /**
-        Removes passed record from playlist array, asks record to cancel downloading.
-        Also removes local file if exists.
+        Removes passed record from playlist array, asks record to cancel downloading, removes local file if exists.
+        Removes record.id from playlistRecordIds then stores data model.
 
         Usage:
 
@@ -261,18 +276,26 @@ class DataModel: NSObject {
         :param: Record
     */
     internal static func playlistRemoveRecord(record: Record) {
-        if let index = find(playlist, record) {
-            playlist.removeAtIndex(index)
+        if let recordIdIndex = find(playlistRecordIds, record.id),
+            recordPlaylistIndex = record.playlistIndex {
+
+            playlist.removeAtIndex(recordPlaylistIndex)
+            playlistRecordIds.removeAtIndex(recordIdIndex)
             record.cancelDownloading()
             record.deleteLocalCopy()
+            DataModel.store()
         }
-        /* else {
-            // it should never happen, but what if it does?
-        } */
+        else {
+            // must never happen
+            assert(false)
+        }
     }
 
     /**
         Adds passed record to playlist array then asks record to start downloading.
+        Also adds record id in playlistRecordIds, then stores data model.
+
+        **Warning:** If you want to change the function, you might want to change restore function, because it creates playlist from playlistRecordIds.
 
         Usage:
 
@@ -281,7 +304,14 @@ class DataModel: NSObject {
         :param: Record
     */
     internal static func playlistAddRecord(record: Record) {
+        let recordId = record.id
+
+        assert(find(playlistRecordIds, recordId) == nil)
+        assert(find(playlist, record) == nil)
+
         playlist.append(record)
+        playlistRecordIds.append(recordId)
+        DataModel.store()
 
         if !record.isStoredLocally {
             record.startDownloading()
