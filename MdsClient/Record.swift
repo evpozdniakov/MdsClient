@@ -57,9 +57,9 @@ class Record: NSObject, NSCoding {
 
             let localURL = documentDir.URLByAppendingPathComponent(fileName)
 
-            println("localFileName: \(localFileName)")
-            println("documentDir: \(documentDir)")
-            println("localURL: \(localURL)")
+            // println("localFileName: \(localFileName)")
+            // println("documentDir: \(documentDir)")
+            // println("localURL: \(localURL)")
 
             return localURL
         }
@@ -550,6 +550,7 @@ extension Record: RecordDownload {
 
         if let fileName = track.url.lastPathComponent {
             localFileName = fileName
+            DataModel.store()
 
             if let localURL = localURL {
                 println("localURL before create task: \(localURL)")

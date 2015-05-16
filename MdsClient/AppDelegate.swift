@@ -10,7 +10,15 @@
 
     TODO:
         *** after each task find and implement one todo or fixme or write swift doc to any function ***
-        [ ] make downloaded files playable
+        [x] make downloaded files playable
+        [x] fix issue: displaying progress for downloaded tracks
+        [x] fix issue: activity indicator while switching from one track to another
+        [ ] stop playing record if it was removed from list
+        [ ] remove buttons play/pause/activityIndicator from search tab
+        [ ] display all records in search
+        [ ] make filter from search
+        [ ] block/unblock UI while downloading catalog
+        [ ] remember record current time
 
 
     FIXME:

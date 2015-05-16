@@ -152,6 +152,8 @@ class Playlist: UIViewController {
                 DataModel.playingRecord = record
                 player!.startPlayback(url: record.localURL!)
             }
+
+            redrawRecordsAtIndexPaths(indexPathsToRedraw)
         }
     }
 
@@ -358,8 +360,8 @@ extension Playlist: UITableViewDataSource {
             else if record.isStoredLocally {
                 // println("caseCCCC")
                 if DataModel.playingRecord === record {
-                    // println("-------- REDRAW CELL of playing record (index: \(indexPath.row), status: \(playbackStatus.rawValue))")
                     let playbackStatus = player!.playbackStatus
+                    // println("-------- REDRAW CELL of playing record (index: \(indexPath.row), status: \(playbackStatus.rawValue))")
 
                     switch playbackStatus {
                     case .Playing, .Seeking:

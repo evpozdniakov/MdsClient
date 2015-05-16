@@ -123,7 +123,7 @@ class RemoteMp3Player: NSObject {
             self.player = AVPlayer(playerItem:self.playerItem)
             self.player.play()
             self.startKeyPathsObserving()
-            self.playbackStatus = .Starting
+            self.playbackStatus = (self.playerItem!.status == .ReadyToPlay) ? .Playing : .Starting
             self.delegate?.remoteMp3Player(self, statusChanged: self.playbackStatus)
         }
     }
