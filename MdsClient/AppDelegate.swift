@@ -14,7 +14,7 @@
         [x] fix issue: displaying progress for downloaded tracks
         [x] fix issue: activity indicator while switching from one track to another
         [x] stop playing record if it was removed from list
-        [ ] remove buttons play/pause/activityIndicator from search tab
+        [x] remove buttons play/pause/activityIndicator from search tab
         [ ] display all records in search
         [ ] make filter from search
         [ ] block/unblock UI while downloading catalog

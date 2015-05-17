@@ -100,49 +100,18 @@
                                                 <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="56s-Kr-81A" userLabel="Buttons">
                                                     <rect key="frame" x="538" y="22" width="44" height="44"/>
                                                     <subviews>
-                                                        <button hidden="YES" opaque="NO" tag="300" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="QfP-pR-Y5J" userLabel="Play 300">
-                                                            <rect key="frame" x="0.0" y="0.0" width="44" height="44"/>
-                                                            <constraints>
-                                                                <constraint firstAttribute="height" constant="44" id="Hbh-BL-ioj"/>
-                                                                <constraint firstAttribute="width" constant="44" id="fBz-9W-Kks"/>
-                                                            </constraints>
-                                                            <state key="normal" image="play">
+                                                        <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="detailDisclosure" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Mx0-mC-r2H">
+                                                            <rect key="frame" x="11" y="11" width="22" height="22"/>
+                                                            <state key="normal">
                                                                 <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
                                                             </state>
-                                                            <connections>
-                                                                <action selector="playBtnClicked:" destination="BYZ-38-t0r" eventType="touchUpInside" id="gaT-05-5Z3"/>
-                                                            </connections>
                                                         </button>
-                                                        <button hidden="YES" opaque="NO" tag="400" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="H0s-tf-AUL" userLabel="Pause 400">
-                                                            <rect key="frame" x="0.0" y="0.0" width="44" height="44"/>
-                                                            <constraints>
-                                                                <constraint firstAttribute="height" constant="44" id="C8C-9G-FFy"/>
-                                                                <constraint firstAttribute="width" constant="44" id="oi7-7L-6om"/>
-                                                            </constraints>
-                                                            <state key="normal" image="pause">
-                                                                <color key="titleShadowColor" white="0.5" alpha="1" colorSpace="calibratedWhite"/>
-                                                            </state>
-                                                            <connections>
-                                                                <action selector="pauseBtnClicked:" destination="BYZ-38-t0r" eventType="touchUpInside" id="U4l-rk-dIg"/>
-                                                            </connections>
-                                                        </button>
-                                                        <activityIndicatorView hidden="YES" opaque="NO" tag="500" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" hidesWhenStopped="YES" style="gray" translatesAutoresizingMaskIntoConstraints="NO" id="GIY-Er-7ea" userLabel="Activity indicator 500">
-                                                            <rect key="frame" x="12" y="12" width="20" height="20"/>
-                                                            <constraints>
-                                                                <constraint firstAttribute="width" constant="20" id="UGQ-oy-Fxn"/>
-                                                                <constraint firstAttribute="height" constant="20" id="rY7-cA-RkD"/>
-                                                            </constraints>
-                                                        </activityIndicatorView>
                                                     </subviews>
                                                     <constraints>
-                                                        <constraint firstAttribute="centerY" secondItem="H0s-tf-AUL" secondAttribute="centerY" id="1m4-Ce-Jqm"/>
-                                                        <constraint firstAttribute="centerX" secondItem="H0s-tf-AUL" secondAttribute="centerX" id="5c8-26-6vt"/>
                                                         <constraint firstAttribute="height" constant="44" id="BSJ-Yz-hRa"/>
-                                                        <constraint firstAttribute="centerY" secondItem="GIY-Er-7ea" secondAttribute="centerY" id="Cen-hQ-ETj"/>
-                                                        <constraint firstAttribute="centerX" secondItem="QfP-pR-Y5J" secondAttribute="centerX" id="ScZ-pC-pPi"/>
                                                         <constraint firstAttribute="width" constant="44" id="auc-SZ-jhv"/>
-                                                        <constraint firstAttribute="centerY" secondItem="QfP-pR-Y5J" secondAttribute="centerY" id="u9z-Lc-fXe"/>
-                                                        <constraint firstAttribute="centerX" secondItem="GIY-Er-7ea" secondAttribute="centerX" id="vxg-Qx-mH8"/>
+                                                        <constraint firstAttribute="centerY" secondItem="Mx0-mC-r2H" secondAttribute="centerY" id="sK5-3t-4w4"/>
+                                                        <constraint firstAttribute="centerX" secondItem="Mx0-mC-r2H" secondAttribute="centerX" id="zwa-Jq-0xh"/>
                                                     </constraints>
                                                 </view>
                                             </subviews>
@@ -238,7 +207,6 @@
                                                             </state>
                                                             <connections>
                                                                 <action selector="playBtnClicked:" destination="geD-fP-W4O" eventType="touchUpInside" id="6EA-OM-prA"/>
-                                                                <action selector="playBtnClicked:" destination="BYZ-38-t0r" eventType="touchUpInside" id="z2Y-XP-lDa"/>
                                                             </connections>
                                                         </button>
                                                         <button hidden="YES" opaque="NO" tag="400" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="3TU-BI-ngU" userLabel="Pause 400">
@@ -252,7 +220,6 @@
                                                             </state>
                                                             <connections>
                                                                 <action selector="pauseBtnClicked:" destination="geD-fP-W4O" eventType="touchUpInside" id="GYu-U8-kRS"/>
-                                                                <action selector="pauseBtnClicked:" destination="BYZ-38-t0r" eventType="touchUpInside" id="x5X-Il-zRb"/>
                                                             </connections>
                                                         </button>
                                                         <activityIndicatorView hidden="YES" opaque="NO" tag="500" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" hidesWhenStopped="YES" style="gray" translatesAutoresizingMaskIntoConstraints="NO" id="o5H-3f-JIq" userLabel="Activity indicator 500">
