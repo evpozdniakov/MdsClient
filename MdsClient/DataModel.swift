@@ -46,9 +46,11 @@ class DataModel: NSObject {
 
         filteredRecords = [Record]()
         for record in allRecords {
-            if record.title.lowercaseString.rangeOfString(searchStringLowercase) != nil ||
+            if searchString == "" ||
+                record.title.lowercaseString.rangeOfString(searchStringLowercase) != nil ||
                 record.author.lowercaseString.rangeOfString(searchStringLowercase) != nil {
-                    filteredRecords.append(record)
+
+                filteredRecords.append(record)
             }
         }
     }

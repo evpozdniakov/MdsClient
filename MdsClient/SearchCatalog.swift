@@ -35,6 +35,10 @@ class SearchCatalog: UIViewController {
         searchBar.becomeFirstResponder()
         loadMdsRecordsOnce()
         toggleDisablePlaylistTab()
+
+        // display all records
+        DataModel.filterRecordsWhichContainText("")
+        tableView.reloadData()
     }
 
     // #MARK: - redraw
