@@ -45,8 +45,8 @@ class SearchCatalog: UIViewController {
         // setTableViewMargings()
         searchBar.becomeFirstResponder()
 
-        player = RemoteMp3Player()
-        player!.delegate = self
+        player = DataModel.getPlayer()
+        player?.delegate = self
 
         loadMdsRecordsOnce()
         toggleDisablePlaylistTab()
@@ -125,12 +125,12 @@ class SearchCatalog: UIViewController {
 
             if record == previousRecord {
                 // resume playback
-                player!.resumePlayback()
+                player?.resumePlayback()
             }
             else {
                 if previousRecord != nil {
                     // stop playing previous record
-                    player!.stop()
+                    player?.stop()
 
                     if let index = previousRecord!.filteredRecordsIndex {
                         // store previous record cell indexPath
@@ -143,7 +143,7 @@ class SearchCatalog: UIViewController {
 
                 record.getFirstPlayableTrack(
                     success: { track in
-                        self.player!.startPlayback(url: track.url)
+                        self.player?.startPlayback(url: track.url)
                     },
                     fail: { error in
                         // #TODO: find all error message texts and move them to enum
@@ -178,7 +178,7 @@ class SearchCatalog: UIViewController {
 
             assert(record == DataModel.playingRecord)
 
-            player!.pausePlayback()
+            player?.pausePlayback()
         }
     }
 
@@ -329,21 +329,26 @@ extension SearchCatalog: UITableViewDataSource {
                 if activityIndicator.isAnimating() { activityIndicator.stopAnimating() }
             }
             else if DataModel.playingRecord === record {
-                let playbackStatus = player!.playbackStatus
-                // println("-------- REDRAW CELL of playing record (index: \(indexPath.row), status: \(playbackStatus.rawValue))")
-                switch playbackStatus {
-                case .Playing, .Seeking:
-                    if !playBtn.hidden { playBtn.hidden = true }
-                    if pauseBtn.hidden { pauseBtn.hidden = false }
-                    if activityIndicator.isAnimating() { activityIndicator.stopAnimating() }
-                case .Paused:
-                    if playBtn.hidden { playBtn.hidden = false }
-                    if !pauseBtn.hidden { pauseBtn.hidden = true }
-                    if activityIndicator.isAnimating() { activityIndicator.stopAnimating() }
-                default:
-                    if !playBtn.hidden { playBtn.hidden = true }
-                    if !pauseBtn.hidden { pauseBtn.hidden = true }
-                    if !activityIndicator.isAnimating() { activityIndicator.startAnimating() }
+                if let playbackStatus = player?.playbackStatus {
+                    // println("-------- REDRAW CELL of playing record (index: \(indexPath.row), status: \(playbackStatus.rawValue))")
+                    switch playbackStatus {
+                    case .Playing, .Seeking:
+                        if !playBtn.hidden { playBtn.hidden = true }
+                        if pauseBtn.hidden { pauseBtn.hidden = false }
+                        if activityIndicator.isAnimating() { activityIndicator.stopAnimating() }
+                    case .Paused:
+                        if playBtn.hidden { playBtn.hidden = false }
+                        if !pauseBtn.hidden { pauseBtn.hidden = true }
+                        if activityIndicator.isAnimating() { activityIndicator.stopAnimating() }
+                    default:
+                        if !playBtn.hidden { playBtn.hidden = true }
+                        if !pauseBtn.hidden { pauseBtn.hidden = true }
+                        if !activityIndicator.isAnimating() { activityIndicator.startAnimating() }
+                    }
+                }
+                else {
+                    // must never happen
+                    assert(false)
                 }
             }
             else {

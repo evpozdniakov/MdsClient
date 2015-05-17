@@ -33,8 +33,8 @@ class Playlist: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        player = RemoteMp3Player()
-        player!.delegate = self
+        player = DataModel.getPlayer()
+        player?.delegate = self
     }
 
     override func viewWillAppear(animated: Bool) {
@@ -133,12 +133,12 @@ class Playlist: UIViewController {
 
             if record == previousRecord {
                 // resume playback
-                player!.resumePlayback()
+                player?.resumePlayback()
             }
             else {
                 if previousRecord != nil {
                     // stop playing previous record
-                    player!.stop()
+                    player?.stop()
 
                     if let index = previousRecord!.playlistIndex {
                         // store previous record cell indexPath
@@ -150,7 +150,7 @@ class Playlist: UIViewController {
 
                 // start playing record
                 DataModel.playingRecord = record
-                player!.startPlayback(url: record.localURL!)
+                player?.startPlayback(url: record.localURL!)
             }
 
             redrawRecordsAtIndexPaths(indexPathsToRedraw)
@@ -175,7 +175,7 @@ class Playlist: UIViewController {
 
             assert(record == DataModel.playingRecord)
 
-            player!.pausePlayback()
+            player?.pausePlayback()
         }
     }
 
@@ -360,16 +360,21 @@ extension Playlist: UITableViewDataSource {
             else if record.isStoredLocally {
                 // println("caseCCCC")
                 if DataModel.playingRecord === record {
-                    let playbackStatus = player!.playbackStatus
-                    // println("-------- REDRAW CELL of playing record (index: \(indexPath.row), status: \(playbackStatus.rawValue))")
+                    if let playbackStatus = player?.playbackStatus {
+                        // println("-------- REDRAW CELL of playing record (index: \(indexPath.row), status: \(playbackStatus.rawValue))")
 
-                    switch playbackStatus {
-                    case .Playing, .Seeking:
-                        pauseBtn.hidden = false
-                    case .Paused:
-                        playBtn.hidden = false
-                    default:
-                        activityIndicator.startAnimating()
+                        switch playbackStatus {
+                        case .Playing, .Seeking:
+                            pauseBtn.hidden = false
+                        case .Paused:
+                            playBtn.hidden = false
+                        default:
+                            activityIndicator.startAnimating()
+                        }
+                    }
+                    else {
+                        // must never happen
+                        assert(false)
                     }
                 }
                 else {

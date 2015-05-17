@@ -29,6 +29,9 @@ class DataModel: NSObject {
     /// currently playing record
     static var playingRecord: Record?
 
+    /// instance of RemoteMp3Player
+    static var player: RemoteMp3Player?
+
     /**
         Will filter records with search string and put them into filteredRecords array.
 
@@ -323,6 +326,25 @@ class DataModel: NSObject {
         if !record.isStoredLocally {
             record.startDownloading()
         }
+    }
+
+    // #MARK: - player
+
+    /**
+        Returns instance of RemoteMp3Player. If it is not determined yet.
+
+        Usage:
+
+            DataModel.getPlayer()
+
+        :returns: RemoteMp3Player
+    */
+    internal static func getPlayer() -> RemoteMp3Player? {
+        if player == nil {
+            player = RemoteMp3Player()
+        }
+
+        return player
     }
 
     // #MARK: - helpers
