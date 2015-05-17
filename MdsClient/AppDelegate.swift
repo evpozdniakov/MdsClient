@@ -16,7 +16,7 @@
         [x] stop playing record if it was removed from list
         [x] remove buttons play/pause/activityIndicator from search tab
         [x] display all records in search
-        [ ] make filter from search, filter records while typing
+        [x] make filter from search; filter records while typing
         [ ] group records by year
         [ ] block/unblock UI while downloading catalog
         [ ] remember record current time

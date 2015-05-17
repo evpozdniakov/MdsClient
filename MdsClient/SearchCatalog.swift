@@ -35,10 +35,7 @@ class SearchCatalog: UIViewController {
         searchBar.becomeFirstResponder()
         loadMdsRecordsOnce()
         toggleDisablePlaylistTab()
-
-        // display all records
-        DataModel.filterRecordsWhichContainText("")
-        tableView.reloadData()
+        displayAllRecords()
     }
 
     // #MARK: - redraw
@@ -50,7 +47,7 @@ class SearchCatalog: UIViewController {
 
             setTableViewMargings()
     */
-    func setTableViewMargings() {
+    private func setTableViewMargings() {
         assert(appIsMainThread())
 
         tableView.contentInset = UIEdgeInsets(top: 66, left: 0, bottom: 49, right: 0)
@@ -67,7 +64,7 @@ class SearchCatalog: UIViewController {
 
         :param: indexPaths: [NSIndexPath]
     */
-    func redrawRecordsAtIndexPaths(indexPaths: [NSIndexPath]) {
+    private func redrawRecordsAtIndexPaths(indexPaths: [NSIndexPath]) {
         appMainThread() {
             self.tableView.beginUpdates()
             self.tableView.reloadRowsAtIndexPaths(indexPaths, withRowAnimation: .None)
@@ -78,13 +75,30 @@ class SearchCatalog: UIViewController {
     /**
         Will enable playlist tab if it has records, disable otherwise.
     */
-    func toggleDisablePlaylistTab() {
+    private func toggleDisablePlaylistTab() {
+        assert(appIsMainThread())
 
         if let tabBarCtlr = parentViewController as? UITabBarController,
             items = tabBarCtlr.tabBar.items as? [UITabBarItem] {
 
             items[1].enabled = DataModel.playlist.count > 0
         }
+    }
+
+    /**
+        Make all records appearing in the table by passing empty string in DataModel.filterRecordsWhichContainText() following by table view reload.
+
+        **Warning:** Require main thread.
+
+        Usage:
+
+            displayAllRecords()
+    */
+    private func displayAllRecords() {
+        assert(appIsMainThread())
+
+        DataModel.filterRecordsWhichContainText("")
+        tableView.reloadData()
     }
 
     // #MARK: miscellaneous
@@ -202,14 +216,8 @@ extension SearchCatalog: UITableViewDelegate {
 // #MARK: - UISearchBarDelegate
 
 extension SearchCatalog: UISearchBarDelegate {
-    func searchBarSearchButtonClicked(searchBar: UISearchBar) {
-        // println("search button clicked, search string: '\(searchBar.text)'")
-        searchBar.resignFirstResponder()
-        DataModel.filterRecordsWhichContainText(searchBar.text)
+    func searchBar(searchBar: UISearchBar, textDidChange searchText: String) {
+        DataModel.filterRecordsWhichContainText(searchText)
         tableView.reloadData()
-    }
-
-    func positionForBar(bar: UIBarPositioning) -> UIBarPosition {
-        return .TopAttached
     }
 }
