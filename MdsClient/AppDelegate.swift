@@ -13,7 +13,7 @@
         [x] make downloaded files playable
         [x] fix issue: displaying progress for downloaded tracks
         [x] fix issue: activity indicator while switching from one track to another
-        [ ] stop playing record if it was removed from list
+        [x] stop playing record if it was removed from list
         [ ] remove buttons play/pause/activityIndicator from search tab
         [ ] display all records in search
         [ ] make filter from search

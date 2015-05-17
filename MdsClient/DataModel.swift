@@ -289,6 +289,11 @@ class DataModel: NSObject {
         if let recordIdIndex = find(playlistRecordIds, record.id),
             recordPlaylistIndex = record.playlistIndex {
 
+            // if record is playing right now, stop it
+            if playingRecord == record {
+                player?.stop()
+            }
+
             playlist.removeAtIndex(recordPlaylistIndex)
             playlistRecordIds.removeAtIndex(recordIdIndex)
             record.cancelDownloading()
