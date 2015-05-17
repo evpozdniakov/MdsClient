@@ -14,12 +14,19 @@ class DataModel: NSObject {
 
     static let errorDomain = "DataModelClass"
 
+    /// all catalog records
     static var allRecords = [Record]()
+
+    /// records filtered by user
     static var filteredRecords = [Record]()
+
+    /// records selected by user
     static var playlist = [Record]()
 
-    /// Contains id of every record in playlist.
+    /// playlist record ids
     static var playlistRecordIds = [Int]()
+
+    /// currently playing record
     static var playingRecord: Record?
 
     /**
