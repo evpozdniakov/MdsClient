@@ -17,7 +17,7 @@
         [x] remove buttons play/pause/activityIndicator from search tab
         [x] display all records in search
         [x] make filter from search; filter records while typing
-        [ ] group records by year
+        [-] group records by year (wont fixed cause some records have no date info)
         [ ] block/unblock UI while downloading catalog
         [ ] remember record current time
 
@@ -68,6 +68,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 }
 
+// #MARK: - global scope
+
+let errorDomain = "GlobalScope"
+
+enum ErrorCode: Int {
+    case UnableToFindPresentedViewController = 1
+}
+
 // #MARK: global functions
 
 // #TODO: detect current view controller in place and avoid passing it as parameter
@@ -77,32 +85,41 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     Usage:
 
-        appDisplayError("Message text", withHandler: nil, inViewController: self)
+        appDisplayError("Message text", withHandler: nil)
 
     :param: message: String Custom error message.
     :param: inViewController: UIViewController The controller which user sees.
 */
-internal func appDisplayError(message: String,
-                                inViewController viewCtlr: UIViewController,
-                                withHandler handler: (Void -> Void)?) {
-    let alert = UIAlertController(
-        title: "Error!",
-        message: message,
-        preferredStyle: .Alert
-    )
-
-    let action = UIAlertAction(
-        title: "OK",
-        style: .Default,
-        handler: { (alert: UIAlertAction!) in
-            if let handler = handler {
-                handler()
-            }
+internal func appDisplayError(message: String, withHandler handler: (Void -> Void)?) {
+    if var topController = UIApplication.sharedApplication().keyWindow?.rootViewController {
+        while let presentedViewController = topController.presentedViewController {
+            topController = presentedViewController
         }
-    )
 
-    alert.addAction(action)
-    viewCtlr.presentViewController(alert, animated: true, completion: nil)
+        let alert = UIAlertController(
+            title: "Error!",
+            message: message,
+            preferredStyle: .Alert
+        )
+
+        let action = UIAlertAction(
+            title: "OK",
+            style: .Default,
+            handler: { (alert: UIAlertAction!) in
+                if let handler = handler {
+                    handler()
+                }
+            }
+        )
+
+        alert.addAction(action)
+        topController.presentViewController(alert, animated: true, completion: nil)
+    }
+    else {
+        let error = NSError(domain: errorDomain, code: ErrorCode.UnableToFindPresentedViewController.rawValue, userInfo: nil)
+
+        appLogError(error, withMessage: "Unable to find presented view controller")
+    }
 }
 
 /**

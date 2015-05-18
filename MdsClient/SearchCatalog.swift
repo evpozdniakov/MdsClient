@@ -124,7 +124,7 @@ class SearchCatalog: UIViewController {
                     appMainThread() {
                         let msg = "Unable to download MDS catalog. The error is \(error.domain)-\(error.code). Application will retry to download catalog. Make sure you have access to the Internet."
 
-                        appDisplayError(msg, inViewController: self, withHandler: self.loadMdsRecordsOnce)
+                        appDisplayError(msg, withHandler: self.loadMdsRecordsOnce)
                     }
                 })
         }

@@ -524,11 +524,7 @@ extension Record: RecordDownload {
                 } */
             },
             fail: { error in
-                // println("---has no tracks for record: \(self.title)---")
-                // appDisplayError("Аудио-файл не найден на сервере.", inViewController: self) {
-                // }
-                // #TODO: the problem, Record.swift is not a controller, so it can't use appDisplayError, cause it requires inViewController.
-                // #TODO: another problem - how to reload table cell?
+                appDisplayError("Audio hasn't been found on server. The problem has been reported.", withHandler: nil)
             })
     }
 
