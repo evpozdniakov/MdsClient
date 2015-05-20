@@ -150,7 +150,7 @@ extension SearchCatalog: UITableViewDataSource {
 
         let record = DataModel.filteredRecords[indexPath.row]
 
-        if let index = find(DataModel.playlist, record) {
+        if DataModel.playlistContainsRecord(record) {
             // #TODO: create struct with colors
             cell.backgroundColor = UIColor(red: 250/255.0, green: 239/255.0, blue: 219/255.0, alpha: 1)
         }

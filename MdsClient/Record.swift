@@ -356,7 +356,7 @@ class Record: NSObject, NSCoding {
                                             fail failureHandler: NSError->Void) {
 
         // println("call downloadAndParseTracksJson")
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
+        appNewThread() {
             // println("dispatch async")
             let urlString = "http://core.mds-club.ru/api/v1.0/mds/records/\(self.id)/files/?access-token=" + Access.generateToken()
 
@@ -549,7 +549,7 @@ extension Record: RecordDownload {
             DataModel.store()
 
             if let localURL = localURL {
-                println("localURL before create task: \(localURL)")
+                // println("localURL before create task: \(localURL)")
                 downloadTask = Ajax.downloadFileFromUrl(track.url, saveTo: localURL,
                     reportingProgress: reportDownloadingProgress,
                     reportingCompletion: {
@@ -558,6 +558,7 @@ extension Record: RecordDownload {
                     },
                     reportingFailure: { error in
                         // #TODO: display error message to the user, ask him for download restart
+                        // appDisplayError("There was a download error. Would you like to restart file download?")
                         self.downloadingProgress = nil
                      })
 

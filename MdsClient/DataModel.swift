@@ -147,14 +147,16 @@ class DataModel: NSObject {
     internal static func store() {
         if allRecords.count > 0 {
             if let fileURL = DataModel.getDataFileURL() {
-                let data = NSMutableData()
-                let archiver = NSKeyedArchiver(forWritingWithMutableData: data)
-                archiver.encodeObject(allRecords, forKey: "AllRecords")
-                archiver.encodeObject(playlistRecordIds, forKey: "PlaylistRecordIds")
-                archiver.finishEncoding()
-                let dataWrittenSuccessfully = data.writeToURL(fileURL, atomically: true)
-                if !dataWrittenSuccessfully {
-                    DataModel.logError(.PlistWasntSaved, withMessage: "DataModel.plist was not saved. Probably there is no enough space.", callFailureHandler: nil)
+                appNewThread() {
+                    let data = NSMutableData()
+                    let archiver = NSKeyedArchiver(forWritingWithMutableData: data)
+                    archiver.encodeObject(self.allRecords, forKey: "AllRecords")
+                    archiver.encodeObject(self.playlistRecordIds, forKey: "PlaylistRecordIds")
+                    archiver.finishEncoding()
+                    let dataWrittenSuccessfully = data.writeToURL(fileURL, atomically: true)
+                    if !dataWrittenSuccessfully {
+                        DataModel.logError(.PlistWasntSaved, withMessage: "DataModel.plist was not saved. Probably there is no enough space.", callFailureHandler: nil)
+                    }
                 }
             }
         }
@@ -183,7 +185,7 @@ class DataModel: NSObject {
     internal static func downloadCatalog(success successHandler: Void->Void,
                                         fail failureHandler: NSError->Void) {
 
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
+        appNewThread() {
             let urlString = "http://core.mds-club.ru/api/v1.0/mds/records/?access-token=" + Access.generateToken()
 
             Ajax.getJsonByUrlString(urlString,

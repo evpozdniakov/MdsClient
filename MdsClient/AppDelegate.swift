@@ -18,8 +18,14 @@
         [x] display all records in search
         [x] make filter from search; filter records while typing
         [-] group records by year (wont fixed cause some records have no date info)
+        [ ] how to remove record from playlist?
         [ ] block/unblock UI while downloading catalog
         [ ] remember record current time
+        [ ] info page
+        [ ] rate record
+        [ ] settings page
+        [ ] settings: skip rated records
+
 
 
     FIXME:
@@ -78,7 +84,6 @@ enum ErrorCode: Int {
 
 // #MARK: global functions
 
-// #TODO: detect current view controller in place and avoid passing it as parameter
 /**
     Displays error custom message to the user as an alert.
     Calls handler when user closes alert dialog.
@@ -196,5 +201,17 @@ internal func appMainThread(handler: Void->Void) {
             handler()
         }
     }
+}
 
+/**
+    Creates new thread and performs the handler in it.
+
+    Usage:
+
+        appNewThread() {
+            // handler code
+        }
+*/
+internal func appNewThread(handler: Void->Void) {
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), handler)
 }

@@ -120,7 +120,7 @@ class Playlist: UIViewController {
     func startOrResumePlaybackOfRecordAssociatedWithButton(playBtn: UIButton) {
         assert(player != nil)
 
-        println("call startOrResumePlaybackOfRecordAssociatedWithButton")
+        // println("call startOrResumePlaybackOfRecordAssociatedWithButton")
 
         if let cell = getCellContainingButton(playBtn),
             record = getRecordAssociatedWithCell(cell),

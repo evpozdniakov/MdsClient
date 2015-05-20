@@ -118,7 +118,7 @@ class RemoteMp3Player: NSObject {
 
         lastPlaybackAction = .Play
 
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
+        appNewThread() {
             self.playerItem = AVPlayerItem(URL: url)
             self.player = AVPlayer(playerItem:self.playerItem)
             self.player.play()
